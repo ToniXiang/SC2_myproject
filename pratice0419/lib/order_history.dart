@@ -11,7 +11,7 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
   late Future<List<Map<String, dynamic>>> _orderHistoryFuture;
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>> fetchOrderHistory() async {
-    final url = Uri.parse('http://192.168.1.111:8000/api/orders/');
+    final url = Uri.parse('https://sc2-myproject.onrender.com/api/orders/');
     try {
       final token = await storage.read(key: 'auth_token');
       final response = await http.get(url,

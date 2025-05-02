@@ -17,7 +17,7 @@ class ProductListScreenState extends State<ProductListScreen>{
     _productsFuture = fetchProducts();
   }
   Future<List<Map<String, dynamic>>> fetchProducts() async {
-    final url = Uri.parse('http://192.168.1.111:8000/api/products/');
+    final url = Uri.parse('https://sc2-myproject.onrender.com/api/products/');
     try {
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -54,7 +54,7 @@ class ProductListScreenState extends State<ProductListScreen>{
       final token = await storage.read(key: 'auth_token');
       final orderData = jsonEncode({'products': selectedItems});
       final response = await http.post(
-        Uri.parse('http://192.168.1.111:8000/api/orders/'),
+        Uri.parse('https://sc2-myproject.onrender.com/api/orders/'),
         headers: {'Content-Type': 'application/json',
                   'Authorization': 'Token $token',},
         body: orderData,

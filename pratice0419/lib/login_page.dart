@@ -17,7 +17,7 @@ class LoginScreenState extends State<LoginScreen>{
     String email=emailController.text;
     
     String password=passwordController.text;
-    final url = Uri.parse('http://192.168.1.111:8000/api/login/');
+    final url = Uri.parse('https://sc2-myproject.onrender.com/api/login/');
     try{
       final response = await http.post(
         url,
@@ -51,7 +51,7 @@ class LoginScreenState extends State<LoginScreen>{
     String password=passwordController.text;
     try{
       final response = await http.post(
-        Uri.parse('http://192.168.1.111:8000/api/register/'),
+        Uri.parse('https://sc2-myproject.onrender.com/api/register/'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'username': username,
