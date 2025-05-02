@@ -95,7 +95,6 @@ class OrderView(APIView):
         except Exception as e:
             return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
         
-
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)
