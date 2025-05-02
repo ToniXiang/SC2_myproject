@@ -1,8 +1,9 @@
-﻿"""
+"""
 Definition of urls for pratice0419_back.
 """
 
 from django.urls import path
+from django.contrib import admin
 from app import views
 from app.views import CustomAuthToken,ProductListView,OrderView,register
 
@@ -14,4 +15,5 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
+    path('admin/', admin.site.urls),
 ]

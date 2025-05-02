@@ -1,4 +1,4 @@
-﻿"""
+"""
 Django settings for pratice0419_back project.
 
 Based on 'django-admin startproject' using Django 2.1.2.
@@ -24,8 +24,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
+APPEND_SLASH = True
 ALLOWED_HOSTS = ['.onrender.com']
-CORS_ALLOWED_ORIGINS = ["https://SC2-myproject.onrender.com"]
+CORS_ALLOWED_ORIGINS = ["https://sc2-myproject.onrender.com"]
 
 # Application references
 # https://docs.djangoproject.com/en/2.1/ref/settings/#std:setting-INSTALLED_APPS
@@ -67,7 +68,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
-CORS_ORIGIN_ALLOW_ALL = True
 ROOT_URLCONF = 'pratice0419_back.urls'
 
 # Template configuration
