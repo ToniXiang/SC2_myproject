@@ -15,7 +15,6 @@ class LoginScreenState extends State<LoginScreen>{
   final storage = FlutterSecureStorage();
   void login() async {
     String email=emailController.text;
-    
     String password=passwordController.text;
     final url = Uri.parse('https://sc2-myproject.onrender.com/api/login/');
     try{
@@ -24,7 +23,7 @@ class LoginScreenState extends State<LoginScreen>{
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-      final responseData = jsonDecode(response.body);
+      final responseData = await jsonDecode(response.body);
       if(response.statusCode==200){
         String token = responseData['token'] ?? "未知Token";
         String username = responseData['username'] ?? "未知使用者";
@@ -124,6 +123,8 @@ class LoginScreenState extends State<LoginScreen>{
               onPressed:register,
               child: const Text('註冊'),
             ),
+            const SizedBox(height: 32),
+            const Text("登入需要數十秒的等待時間")
           ],
         ),
       ),

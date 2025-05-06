@@ -1,6 +1,7 @@
 import 'login_page.dart';
 import 'product_list.dart';
 import 'order_history.dart';
+import 'settings_page.dart';
 import 'package:flutter/material.dart';
 class HomeScreen extends StatelessWidget {
   final String username;
@@ -73,6 +74,18 @@ class HomeScreen extends StatelessWidget {
                   (route) => false,
                 );
               },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('設定'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsPage()
+                  ),
+                );
+              }
             ),
           ],
         ),
