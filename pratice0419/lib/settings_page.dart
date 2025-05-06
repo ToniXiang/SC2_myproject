@@ -8,6 +8,13 @@ class SettingsPage extends StatefulWidget {
   SettingsPageState createState()=>SettingsPageState();
 }
 class SettingsPageState extends State<SettingsPage>{
+    void showSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeModeNotifier>(context);
@@ -38,8 +45,29 @@ class SettingsPageState extends State<SettingsPage>{
                         hintText: '輸入您的更改密碼',
                       ),
                     ),
+                    const SizedBox(height:8),
+                    TextButton(
+                      onPressed:(){
+                        showSnackBar("尚未完成的功能");
+                      },
+                      child:const Text("儲存設定")
+                    )
                   ],
                 ),
+              ),
+            ],
+          ),
+          ExpansionTile(
+            leading: const Icon(Icons.notifications),
+            title: const Text('通知設定'),
+            children: [
+              SwitchListTile(
+                title: const Text('啟用通知'),
+                value: false,
+                onChanged: (bool value) {
+                  // value ? "通知已啟用" : "通知已關閉";
+                  showSnackBar("尚未完成的功能");
+                },
               ),
             ],
           ),
@@ -66,7 +94,20 @@ class SettingsPageState extends State<SettingsPage>{
                           themeNotifier.setThemeMode(newValue);
                         }
                       },
-                    )
+                    ),
+                    DropdownButton<String>(
+                      value: '繁體中文',
+                      items: <String>['繁體中文', 'English']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        showSnackBar("尚未完成的功能");
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -78,7 +119,23 @@ class SettingsPageState extends State<SettingsPage>{
             children:[
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text("資工購物平台", style:TextStyle(fontSize: 14)),
+                child: Text("資工購物平台", style:TextStyle(fontSize: 14,fontWeight:FontWeight.bold)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text("軟體介紹: 這是一個簡單的購物應用程式。"),
+                    SizedBox(height: 8),
+                    Text("1.登入與註冊頁面"),
+                    Text("2.主頁面"),
+                    Text("3.商品列表"),
+                    Text("4.購物車內容"),
+                    Text("5.登出"),
+                    Text("6.設定"),
+                  ]
+                )
               ),
               InkWell(
                 onTap: () async {

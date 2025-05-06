@@ -13,17 +13,21 @@ class LoginScreenState extends State<LoginScreen>{
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final storage = FlutterSecureStorage();
+  bool isLoading=false;
   void login() async {
     String email=emailController.text;
     String password=passwordController.text;
     final url = Uri.parse('https://sc2-myproject.onrender.com/api/login/');
     try{
+      setState((){
+        isLoading=true;
+      });      
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       );
-      final responseData = await jsonDecode(response.body);
+      final responseData = jsonDecode(response.body);
       if(response.statusCode==200){
         String token = responseData['token'] ?? "未知Token";
         String username = responseData['username'] ?? "未知使用者";
@@ -36,6 +40,7 @@ class LoginScreenState extends State<LoginScreen>{
           emailController.clear();
           usernameController.clear();
           passwordController.clear();
+          isLoading=false;
         });
         showSnackBar("登入失敗");
       } 
@@ -49,6 +54,7 @@ class LoginScreenState extends State<LoginScreen>{
     String username=usernameController.text;
     String password=passwordController.text;
     try{
+      isLoading=true;
       final response = await http.post(
         Uri.parse('https://sc2-myproject.onrender.com/api/register/'),
         headers: {'Content-Type': 'application/json'},
@@ -65,6 +71,7 @@ class LoginScreenState extends State<LoginScreen>{
     }
     catch(e){
       showSnackBar("無法連接到伺服器");
+      isLoading=false;
     }
   }
   void showSnackBar(String message) {
@@ -72,6 +79,9 @@ class LoginScreenState extends State<LoginScreen>{
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
+      setState((){
+        isLoading=false;
+      });   
     }
   }
   void navigateToHomeScreen(String username) {
@@ -98,6 +108,13 @@ class LoginScreenState extends State<LoginScreen>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(
+              "資工購物平台",
+              style: const TextStyle(
+                  color: Colors.deepPurpleAccent,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold),
+            ),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: '郵件',hintText:"你的電子郵件"),
@@ -124,7 +141,12 @@ class LoginScreenState extends State<LoginScreen>{
               child: const Text('註冊'),
             ),
             const SizedBox(height: 32),
-            const Text("登入需要數十秒的等待時間")
+            const Text("登入需要數十秒的等待時間"),
+            if(isLoading)
+              CircularProgressIndicator(
+                backgroundColor: Colors.grey[200],
+                valueColor: AlwaysStoppedAnimation(Colors.blue),
+              ),
           ],
         ),
       ),

@@ -99,12 +99,6 @@ class HomeScreen extends StatelessWidget {
               's1411232069@ad1.nutc.edu.tw',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
-            SizedBox(height: 4),
-            Text(
-              '軟體介紹: 這是一個簡單的購物應用程式。',
-              style: TextStyle(fontSize: 14, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
           ],
         ),
       ),
