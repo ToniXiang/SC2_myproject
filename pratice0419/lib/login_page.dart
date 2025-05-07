@@ -146,7 +146,7 @@ class LoginScreenState extends State<LoginScreen>{
               CircularProgressIndicator(
                 backgroundColor: Colors.grey[200],
                 valueColor: AlwaysStoppedAnimation(Colors.blue),
-              ),
+            ),
           ],
         ),
       ),
