@@ -73,27 +73,31 @@ class ProductListScreenState extends State<ProductListScreen>{
   }
   void pushOrder()async{
     final products = await _productsFuture;
+    double total=0;
     if (!mounted) return;
     showDialog(
       context:context,
       builder:(BuildContext context){
         return AlertDialog(
+          title:const Text("訂單明細"),
           content:SingleChildScrollView(
             child: ListBody(
-            children: selectedProducts.map((index) {
-              final product = products[index];
-              return ListTile(
-                title: Text(product['name']),
-                subtitle: Text('數量: ${product['quantity']}'),
-                trailing: Text('\$${double.parse(product['price'])*product['quantity']}'),
-              );
+              children: selectedProducts.map((index) {
+                final product = products[index];
+                total+=double.parse(product['price'])*product['quantity'];
+                return ListTile(
+                  title: Text(product['name']),
+                  subtitle: Text('數量: ${product['quantity']}'),
+                  trailing: Text('\$${(double.parse(product['price'])*product['quantity']).toStringAsFixed(2)}'),
+                );
             }).toList(),
           ),
           ),
           actions:[
+            Text("總共\$${total.toStringAsFixed(2)}"),
             Row(
               children:[
-                TextButton(
+                ElevatedButton(
                   onPressed:(){
                     placeOrder();
                     Navigator.of(context).pop();
@@ -118,6 +122,28 @@ class ProductListScreenState extends State<ProductListScreen>{
         SnackBar(content: Text(message)),
       );
     }
+  }
+  void removeOrder()async{
+    // await _Future; 並不會重新發起 HTTP 請求，而是直接返回已解析的結果
+    final products = await _productsFuture;
+    setState(() {
+      for (var index in selectedProducts) {
+        products[index]['quantity'] = 1;
+      }
+      selectedProducts.clear();
+    });
+    showSnackBar("刷新當前訂單完畢");
+  }
+  void openOrderSummary(){
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => OrderSummaryScreen(
+          selectedProducts: selectedProducts,
+          productsFuture: _productsFuture,
+        ),
+      ),
+    );
   }
   @override
   Widget build(BuildContext context) {
@@ -177,6 +203,7 @@ class ProductListScreenState extends State<ProductListScreen>{
                   onTap: () {
                     setState(() {
                       if (isSelected) {
+                        products[index]['quantity']=1;
                         selectedProducts.remove(index);
                       } else {
                         selectedProducts.add(index);
@@ -192,6 +219,10 @@ class ProductListScreenState extends State<ProductListScreen>{
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
+          icon: const Icon(Icons.remove),
+          label: "清除訂單",
+          ),
+          BottomNavigationBarItem(
           icon: const Icon(Icons.book),
           label: "檢查訂單",
           ),
@@ -200,18 +231,18 @@ class ProductListScreenState extends State<ProductListScreen>{
           label: "送出訂單",
           ),
         ],onTap: (index) {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => OrderSummaryScreen(
-                  selectedProducts: selectedProducts,
-                  productsFuture: _productsFuture,
-                ),
-              ),
-            );
-          } else if (index == 1) {
-            pushOrder();
+          switch(index){
+            case 0:
+              removeOrder();
+              break;
+            case 1:
+              openOrderSummary();
+              break;
+            case 2:
+              pushOrder();
+              break;
+            default:
+              break;
           }
         },
       )
