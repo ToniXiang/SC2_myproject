@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'ordersummary_screen.dart';
 class ProductListScreen extends StatefulWidget {
   const ProductListScreen({super.key});
   @override
@@ -69,7 +70,48 @@ class ProductListScreenState extends State<ProductListScreen>{
       }
       selectedProducts.clear();
     });
-}
+  }
+  void pushOrder()async{
+    final products = await _productsFuture;
+    if (!mounted) return;
+    showDialog(
+      context:context,
+      builder:(BuildContext context){
+        return AlertDialog(
+          content:SingleChildScrollView(
+            child: ListBody(
+            children: selectedProducts.map((index) {
+              final product = products[index];
+              return ListTile(
+                title: Text(product['name']),
+                subtitle: Text('數量: ${product['quantity']}'),
+                trailing: Text('\$${double.parse(product['price'])*product['quantity']}'),
+              );
+            }).toList(),
+          ),
+          ),
+          actions:[
+            Row(
+              children:[
+                TextButton(
+                  onPressed:(){
+                    placeOrder();
+                    Navigator.of(context).pop();
+                  },
+                  child:const Text("送出")
+                ),
+                TextButton(
+                  onPressed:(){
+                    Navigator.of(context).pop();
+                  },
+                  child:const Text("關閉")
+                ),
+            ])
+          ]
+        );
+      }
+    );
+  }
   void showSnackBar(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -93,7 +135,7 @@ class ProductListScreenState extends State<ProductListScreen>{
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('沒有選擇任何商品'));
+            return const Center(child: Text('沒有任何商品內容'));
           } else {
             final products = snapshot.data!;
             return ListView.builder(
@@ -169,71 +211,10 @@ class ProductListScreenState extends State<ProductListScreen>{
               ),
             );
           } else if (index == 1) {
-            placeOrder();
+            pushOrder();
           }
         },
       )
-    );
-  }
-}
-class OrderSummaryScreen extends StatelessWidget {
-  final Set<int> selectedProducts;
-  final Future<List<Map<String, dynamic>>> productsFuture;
-  const OrderSummaryScreen({
-    super.key,
-    required this.selectedProducts,
-    required this.productsFuture,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("訂單摘要", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.deepPurpleAccent,
-      ),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: productsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('沒有選擇任何商品'));
-          } else {
-            final products = snapshot.data!;
-            final selectedItems = selectedProducts.map((index) => products[index]).toList();
-            final totalCost = selectedItems.fold<double>(
-              0,
-              (sum, product) => sum + (double.parse(product['price']) * product['quantity']),
-            );
-            return Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: selectedItems.length,
-                    itemBuilder: (context, index) {
-                      final product = selectedItems[index];
-                      return ListTile(
-                        title: Text(product['name']),
-                        subtitle: Text('數量: ${product['quantity']}'),
-                        trailing: Text('\$${(double.parse(product['price']) * product['quantity']).toInt()}'),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    '總共花費: \$${totalCost.toInt()}',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            );
-          }
-        },
-      ),
     );
   }
 }

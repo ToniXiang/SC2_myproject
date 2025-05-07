@@ -30,10 +30,10 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
           };
         }).toList();
       } else {
-        throw Exception('Failed to load order history: ${response.body}');
+        throw Exception('載入歷史訂單失敗：${response.body}');
       }
     } catch (e) {
-      throw Exception('Error fetching order history: $e');
+      throw Exception('載入歷史訂單失敗：$e');
     }
   }
 
@@ -65,7 +65,7 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No order history available.'));
+            return const Center(child: Text('沒有任何訂單內容'));
           } else {
             final orderHistory = snapshot.data!;
             return ListView.builder(
