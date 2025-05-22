@@ -129,11 +129,10 @@ class SettingsPageState extends State<SettingsPage>{
                     Text("軟體介紹: 這是一個簡單的購物應用程式。"),
                     SizedBox(height: 8),
                     Text("1.登入與註冊頁面"),
-                    Text("2.主頁面"),
-                    Text("3.商品列表"),
-                    Text("4.購物車內容"),
-                    Text("5.登出"),
-                    Text("6.設定"),
+                    Text("2.主頁面(商品列表)"),
+                    Text("3.過去的訂單"),
+                    Text("4.登出"),
+                    Text("5.設定"),
                   ]
                 )
               ),
