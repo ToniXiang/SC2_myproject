@@ -2,8 +2,7 @@ import 'login_page.dart';
 import 'order_history.dart';
 import 'settings_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'ordersummary_screen.dart';
 class HomeScreen extends StatefulWidget {
@@ -29,21 +28,15 @@ class HomeScreenState extends State<HomeScreen>{
     _productsFuture = fetchProducts();
   }
   Future<List<Map<String, dynamic>>> fetchProducts() async {
-    final url = Uri.parse('https://sc2-myproject.onrender.com/api/products/');
     try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        return data.map((product) {
-          return {
-            'name': product['name'],
-            'price': product['price'],
-            'quantity': product['quantity'] ?? 1,
-          };
-        }).toList();
-      } else {
-        throw Exception('載入商品失敗: ${response.body}');
-      }
+      final data = await ApiService.getRequest('products/');
+      return data.map((product) {
+        return {
+          'name': product['name'],
+          'price': product['price'],
+          'quantity': product['quantity'] ?? 1,
+        };
+      }).toList();
     } catch (e) {
       throw Exception('伺服器內部錯誤');
     }
@@ -64,16 +57,15 @@ class HomeScreenState extends State<HomeScreen>{
     }).toList();
     try {
       final token = await storage.read(key: 'auth_token');
-      final orderData = jsonEncode({'products': selectedItems});
-      final response = await http.post(
-        Uri.parse('https://sc2-myproject.onrender.com/api/orders/'),
-        headers: {'Content-Type': 'application/json',
-                  'Authorization': 'Token $token',},
-        body: orderData,
+      await ApiService.postRequest(
+        'orders/',
+        {'products': selectedItems},
+        token: token,
       );
-      showSnackBar((response.statusCode == 201?"訂單送出成功":"訂單送出失敗"));
+      showSnackBar("訂單送出成功");
     } catch (e) {
-      showSnackBar("伺服器內部錯誤");
+      showSnackBar("訂單送出失敗");
+      return;
     }
     setState(() {
       for (var index in selectedProducts) {

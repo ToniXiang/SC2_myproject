@@ -156,7 +156,32 @@ class SettingsPageState extends State<SettingsPage>{
                   ),
                 ),
               ),
-              const SizedBox(height:16)
+              const SizedBox(height:16),
+              InkWell(
+                onTap: () async {
+                  const url = 'https://sc2-myproject.onrender.com/';
+                  final Uri uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri) && context.mounted) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("不能開啟網址")),
+                    );
+                  }
+                },
+                child: Container(
+                  padding: EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '介紹網站',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
             ]
           ),
         ],

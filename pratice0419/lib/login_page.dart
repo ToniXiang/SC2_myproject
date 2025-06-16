@@ -1,7 +1,6 @@
 import 'home_page.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,31 +14,29 @@ class LoginScreenState extends State<LoginScreen>{
   final storage = FlutterSecureStorage();
   bool isLoading=false;
   void login() async {
-    String email=emailController.text;
-    String password=passwordController.text;
-    final url = Uri.parse('https://sc2-myproject.onrender.com/api/login/');
     try{
       setState((){
         isLoading=true;
       });      
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+      final responseData = await ApiService.postRequest(
+        'login/',
+        {
+          'email': emailController.text,
+          'password': passwordController.text,
+        },
       );
-      final responseData = jsonDecode(response.body);
-      if(response.statusCode==200){
+      if(responseData.containsKey('token') && responseData.containsKey('username')) {
         String token = responseData['token'] ?? "未知Token";
         String username = responseData['username'] ?? "未知使用者";
-        saveToken(token);
+        await saveToken(token);
         showSnackBar("登入成功，歡迎 $username");
         navigateToHomeScreen(username);
       }
       else{
+        emailController.clear();
+        usernameController.clear();
+        passwordController.clear();
         setState((){
-          emailController.clear();
-          usernameController.clear();
-          passwordController.clear();
           isLoading=false;
         });
         showSnackBar("登入失敗");
@@ -50,28 +47,23 @@ class LoginScreenState extends State<LoginScreen>{
     }
   }
   void register() async {
-    String email=emailController.text;
-    String username=usernameController.text;
-    String password=passwordController.text;
-    try{
-      isLoading=true;
-      final response = await http.post(
-        Uri.parse('https://sc2-myproject.onrender.com/api/register/'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-          'email':email
-        }),
+    try {
+      isLoading = true;
+      final responseData = await ApiService.postRequest(
+        'register/',
+        {
+          'email': emailController.text,
+          'username': usernameController.text,
+          'password': passwordController.text,
+        },
       );
-      final responseData = jsonDecode(response.body);
-      if(!mounted)return;
+      if (!mounted) return;
       String feedback = responseData['message'] ?? responseData['error'] ?? "未知錯誤";
       showSnackBar(feedback);
-    }
-    catch(e){
+    } catch (e) {
       showSnackBar("無法連接到伺服器");
-      isLoading=false;
+    } finally {
+      isLoading = false;
     }
   }
   void showSnackBar(String message) {
@@ -97,6 +89,19 @@ class LoginScreenState extends State<LoginScreen>{
   Future<void> saveToken(String token) async {
     await storage.write(key: 'auth_token', value: token);
   }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    bool obscureText = false,
+  }) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label, hintText: hint),
+      obscureText: obscureText,
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,26 +113,29 @@ class LoginScreenState extends State<LoginScreen>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
+            const Text(
               "資工購物平台",
-              style: const TextStyle(
+              style: TextStyle(
                   color: Colors.deepPurpleAccent,
                   fontSize: 30,
                   fontWeight: FontWeight.bold),
             ),
-            TextField(
+            buildTextField(
               controller: emailController,
-              decoration: const InputDecoration(labelText: '郵件',hintText:"你的電子郵件"),
+              label: '電子郵件',
+              hint: '你的電子郵件',
             ),
             const SizedBox(height: 16),
-            TextField(
+            buildTextField(
               controller: usernameController,
-              decoration: const InputDecoration(labelText: '名稱',hintText:("你的名稱(登入不用寫)")),
+              label: '使用者名稱',
+              hint: '你的使用者名稱(登入不用寫)',
             ),
             const SizedBox(height: 16),
-            TextField(
+            buildTextField(
               controller: passwordController,
-              decoration: const InputDecoration(labelText: '密碼',hintText:("你的密碼")),
+              label: '密碼',
+              hint: '你的密碼',
               obscureText: true,
             ),
             const SizedBox(height: 32),

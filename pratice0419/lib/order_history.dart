@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -11,29 +10,21 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
   late Future<List<Map<String, dynamic>>> _orderHistoryFuture;
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>> fetchOrderHistory() async {
-    final url = Uri.parse('https://sc2-myproject.onrender.com/api/orders/');
     try {
       final token = await storage.read(key: 'auth_token');
-      final response = await http.get(url,
-        headers:{
-          'Authorization': 'Token $token',
-        });
-      if (response.statusCode == 200) {
-        final List<dynamic> orders = jsonDecode(response.body);
-        final List<dynamic> orderItems = orders.expand((order) => order['items']).toList();
-        return orderItems.map((item) {
-          return {
-            'id': item['id'],
-            'product_name': item['product_name'],
-            'product_price': item['product_price'],
-            'quantity': item['quantity'],
-          };
-        }).toList();
-      } else {
-        throw Exception('載入歷史訂單失敗：${response.body}');
-      }
-    } catch (e) {
-      throw Exception('載入歷史訂單失敗：$e');
+      final List<dynamic> orders = await ApiService.getRequest('orders/', token: token);
+      final List<dynamic> orderItems = orders.expand((order) => order['items']).toList();
+      return orderItems.map((item) {
+        return {
+          'id': item['id'],
+          'product_name': item['product_name'],
+          'product_price': item['product_price'],
+          'quantity': item['quantity'],
+        };
+      }).toList();
+    }catch (e) {
+      showSnackBar("無法連接到伺服器");
+      return [];
     }
   }
 
