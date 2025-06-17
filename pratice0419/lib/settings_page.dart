@@ -2,18 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import 'package:url_launcher/url_launcher.dart';
 import 'thememodenotifier.dart';
+import 'notice_service.dart';
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
   @override
   SettingsPageState createState()=>SettingsPageState();
 }
 class SettingsPageState extends State<SettingsPage>{
-    void showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+  void changeNotice(bool value) {
+    if(value) {
+      setState(() {
+        NoticeService.isNoticeEnabled = true;
+      });
+      NoticeService.showSnackBar("通知已啟用", context);
+    } else {
+      setState(() {
+        NoticeService.isNoticeEnabled = false;
+      });
+      NoticeService.showSnackBar("通知已停用",context);
     }
+  }
+  void changePassword() {
+    // 在這裡處理更改密碼的邏輯
+    NoticeService.showSnackBar("尚未完成的功能",context);
   }
   @override
   Widget build(BuildContext context) {
@@ -47,9 +58,7 @@ class SettingsPageState extends State<SettingsPage>{
                     ),
                     const SizedBox(height:8),
                     TextButton(
-                      onPressed:(){
-                        showSnackBar("尚未完成的功能");
-                      },
+                      onPressed: changePassword,
                       child:const Text("儲存設定")
                     )
                   ],
@@ -62,12 +71,11 @@ class SettingsPageState extends State<SettingsPage>{
             title: const Text('通知設定'),
             children: [
               SwitchListTile(
-                title: const Text('啟用通知'),
-                value: false,
-                onChanged: (bool value) {
-                  // value ? "通知已啟用" : "通知已關閉";
-                  showSnackBar("尚未完成的功能");
-                },
+                  value: NoticeService.isNoticeEnabled,
+                  title: const Text('啟用通知'),
+                  onChanged: (value) {
+                    changeNotice(value);
+                  },
               ),
             ],
           ),
@@ -80,34 +88,30 @@ class SettingsPageState extends State<SettingsPage>{
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    DropdownButton<String>(
-                      value: themeNotifier.themeMode,
-                      items: <String>['淺色模式', '深色模式']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          themeNotifier.setThemeMode(newValue);
-                        }
-                      },
-                    ),
-                    DropdownButton<String>(
-                      value: '繁體中文',
-                      items: <String>['繁體中文', 'English']
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        showSnackBar("尚未完成的功能");
-                      },
-                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Adjust alignment as needed
+                      children: [
+                        const Text(
+                          '目前主題:',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        DropdownButton<String>(
+                          value: themeNotifier.themeMode,
+                          items: <String>['淺色模式', '深色模式']
+                              .map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              themeNotifier.setThemeMode(newValue);
+                            }
+                          },
+                        ),
+                      ],
+                    )
                   ],
                 ),
               ),

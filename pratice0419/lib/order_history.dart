@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'notice_service.dart';
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
   @override
@@ -23,7 +24,8 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
         };
       }).toList();
     }catch (e) {
-      showSnackBar("無法連接到伺服器");
+      if(!mounted) return [];
+      NoticeService.showSnackBar("無法獲取訂單歷史", context);
       return [];
     }
   }
@@ -32,13 +34,6 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
   void initState() {
     super.initState();
     _orderHistoryFuture = fetchOrderHistory();
-  }
-  void showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
   }
   @override
   Widget build(BuildContext context) {

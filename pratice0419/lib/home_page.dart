@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'ordersummary_screen.dart';
+import 'notice_service.dart';
 class HomeScreen extends StatefulWidget {
   final String username;
   const HomeScreen({super.key,required this.username});
@@ -12,13 +13,6 @@ class HomeScreen extends StatefulWidget {
   HomeScreenState createState()=>HomeScreenState();
 }
 class HomeScreenState extends State<HomeScreen>{
-  void showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-  }
   late Future<List<Map<String, dynamic>>> _productsFuture;
   final storage = FlutterSecureStorage();
   final Set<int> selectedProducts = {};
@@ -26,6 +20,13 @@ class HomeScreenState extends State<HomeScreen>{
   void initState() {
     super.initState();
     _productsFuture = fetchProducts();
+    // print notice
+    NoticeService.getNotices().then((notices) {
+      if (notices.isNotEmpty) {
+        if (!mounted) return;
+        NoticeService.showSnackBar(notices.join('\n'), context);
+      }
+    });
   }
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     try {
@@ -43,7 +44,8 @@ class HomeScreenState extends State<HomeScreen>{
   }
   void placeOrder() async {
     if (selectedProducts.isEmpty){
-      showSnackBar("未選取任何商品");
+      if (!mounted) return;
+      NoticeService.showSnackBar("未選取任何商品",context);
       return;
     }
     final products = await _productsFuture;
@@ -62,9 +64,11 @@ class HomeScreenState extends State<HomeScreen>{
         {'products': selectedItems},
         token: token,
       );
-      showSnackBar("訂單送出成功");
+      if (!mounted) return;
+      NoticeService.showSnackBar("訂單送出成功",context);
     } catch (e) {
-      showSnackBar("訂單送出失敗");
+      if(!mounted) return;
+      NoticeService.showSnackBar("訂單送出失敗",context);
       return;
     }
     setState(() {
@@ -74,7 +78,7 @@ class HomeScreenState extends State<HomeScreen>{
       selectedProducts.clear();
     });
   }
-    void pushOrder()async{
+  void pushOrder()async{
     final products = await _productsFuture;
     double total=0;
     if (!mounted) return;
@@ -123,12 +127,13 @@ class HomeScreenState extends State<HomeScreen>{
     // await _Future; 並不會重新發起 HTTP 請求，而是直接返回已解析的結果
     final products = await _productsFuture;
     setState(() {
-      for (var index in selectedProducts) {
-        products[index]['quantity'] = 1;
+      for (var product in products) {
+        product['quantity'] = 1;
       }
       selectedProducts.clear();
     });
-    showSnackBar("刷新當前訂單完畢");
+    if (!mounted) return;
+    NoticeService.showSnackBar("刷新當前訂單完畢",context);
   }
   void openOrderSummary(){
     Navigator.push(
@@ -140,6 +145,38 @@ class HomeScreenState extends State<HomeScreen>{
         ),
       ),
     );
+  }
+  void logOut(){
+    showDialog(
+        context:context,
+        builder:(BuildContext context){
+          return AlertDialog(
+            title: const Text('登出'),
+            content: const Text('確定要登出嗎?'),
+            actions: <Widget>[
+              ElevatedButton(
+                child: const Text('確定'),
+                onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
+                    (route) => false,
+                  );
+                },
+              ),
+              TextButton(
+                child: const Text('取消'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        }
+      );        
   }
   @override
   Widget build(BuildContext context) {
@@ -204,38 +241,7 @@ class HomeScreenState extends State<HomeScreen>{
                   ListTile(
                     leading: const Icon(Icons.logout),
                     title: const Text('登出'),
-                    onTap: () {
-                      showDialog(
-                        context:context,
-                        builder:(BuildContext context){
-                          return AlertDialog(
-                            title: const Text('登出'),
-                            content: const Text('確定要登出嗎?'),
-                            actions: <Widget>[
-                              ElevatedButton(
-                                child: const Text('確定'),
-                                onPressed: () {
-                                    Navigator.of(context).pop();
-                                    Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const LoginScreen(),
-                                    ),
-                                    (route) => false,
-                                  );
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('取消'),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          );
-                        }
-                      );        
-                    },
+                    onTap: logOut,
                   ),
                   ListTile(
                     leading: const Icon(Icons.settings),

@@ -1,6 +1,7 @@
 import 'home_page.dart';
 import 'package:flutter/material.dart';
 import 'api_service.dart';
+import 'notice_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +30,9 @@ class LoginScreenState extends State<LoginScreen>{
         String token = responseData['token'] ?? "未知Token";
         String username = responseData['username'] ?? "未知使用者";
         await saveToken(token);
+        NoticeService.removeAllNotices();
+        NoticeService();
+        NoticeService.addNotice("登入成功，歡迎 $username");
         showSnackBar("登入成功，歡迎 $username");
         navigateToHomeScreen(username);
       }
