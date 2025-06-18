@@ -9,10 +9,6 @@ class SettingsPage extends StatefulWidget {
   SettingsPageState createState()=>SettingsPageState();
 }
 class SettingsPageState extends State<SettingsPage>{
-  @override
-  void initState() {
-    super.initState();
-  }
   void changeNotice(bool value) {
     if(value) {
       setState(() {

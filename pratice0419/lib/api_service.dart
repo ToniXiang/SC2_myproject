@@ -3,7 +3,6 @@ import 'dart:convert';
 
 class ApiService {
   static const String baseUrl = 'https://sc2-myproject.onrender.com/api/';
-
   /// Sends a POST request to the specified endpoint with the given body.
   static Future<Map<String, dynamic>> postRequest(
       String endpoint, Map<String, dynamic> body,

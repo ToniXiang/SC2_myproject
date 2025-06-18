@@ -14,6 +14,15 @@ class LoginScreenState extends State<LoginScreen>{
   final TextEditingController passwordController = TextEditingController();
   final storage = FlutterSecureStorage();
   bool isLoading=false;
+  void showSnackBar(String message) {
+    // 不紀錄登入或註冊的錯誤訊息
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
   void login() async {
     try{
       setState((){
@@ -31,8 +40,7 @@ class LoginScreenState extends State<LoginScreen>{
         String username = responseData['username'] ?? "未知使用者";
         await saveToken(token);
         NoticeService.removeAllNotices();
-        if (!mounted) return;
-        NoticeService.showSnackBar("登入成功，歡迎 $username",context);
+        showSnackBar("登入成功，歡迎 $username");
         navigateToHomeScreen(username);
       }
       else{
@@ -42,13 +50,11 @@ class LoginScreenState extends State<LoginScreen>{
         setState((){
           isLoading=false;
         });
-        if (!mounted) return;
-        NoticeService.showSnackBar("登入失敗",context);
+        showSnackBar("登入失敗");
       } 
     }
     catch(e){
-      if (!mounted) return;
-      NoticeService.showSnackBar("無法連接到伺服器",context);
+      showSnackBar("無法連接到伺服器");
     }
   }
   void register() async {
@@ -63,11 +69,9 @@ class LoginScreenState extends State<LoginScreen>{
         },
       );
       String feedback = responseData['message'] ?? responseData['error'] ?? "未知錯誤";
-      if (!mounted) return;
-      NoticeService.showSnackBar(feedback,context);
+      showSnackBar(feedback);
     } catch (e) {
-      if (!mounted) return;
-      NoticeService.showSnackBar("無法連接到伺服器",context);
+      showSnackBar("無法連接到伺服器");
     } finally {
       isLoading = false;
     }
