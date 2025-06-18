@@ -20,13 +20,6 @@ class HomeScreenState extends State<HomeScreen>{
   void initState() {
     super.initState();
     _productsFuture = fetchProducts();
-    // print notice
-    NoticeService.getNotices().then((notices) {
-      if (notices.isNotEmpty) {
-        if (!mounted) return;
-        NoticeService.showSnackBar(notices.join('\n'), context);
-      }
-    });
   }
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     try {
@@ -124,7 +117,6 @@ class HomeScreenState extends State<HomeScreen>{
     );
   }
   void removeOrder()async{
-    // await _Future; 並不會重新發起 HTTP 請求，而是直接返回已解析的結果
     final products = await _productsFuture;
     setState(() {
       for (var product in products) {
@@ -178,11 +170,83 @@ class HomeScreenState extends State<HomeScreen>{
         }
       );        
   }
+  void showNoticeDialog() {
+    if (!mounted) return;
+    if (NoticeService.logs.isEmpty) {
+      NoticeService.addLog("沒有任何通知");
+      return;
+    }
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('通知'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: ListView.builder(
+                  itemCount: NoticeService.logs.length,
+                  itemBuilder: (context, index) {
+                    final log = NoticeService.logs[index];
+                    final timestamp = log['timestamp'] is DateTime
+                        ? (log['timestamp'] as DateTime).toLocal().toString()
+                        : log['timestamp'];
+                    return ListTile(
+                      title: Text(log['message']),
+                      subtitle: Text(
+                        timestamp,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          setState(() {
+                            NoticeService.removeNotice(index);
+                          });
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              actions: <Widget>[
+                ElevatedButton(
+                  child: const Text('關閉'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  void openSettingsPage() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsPage(),
+      ),
+    );
+    setState(() {
+      // Refresh the state after returning from settings
+    });
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("首頁", style: TextStyle(color: Colors.white)),
+        actions:[
+          if(NoticeService.isNoticeEnabled)
+            IconButton(
+              icon:Icon(Icons.notifications, color: Colors.white),
+              onPressed:showNoticeDialog
+          )
+        ],
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurpleAccent,
       ),
@@ -246,14 +310,7 @@ class HomeScreenState extends State<HomeScreen>{
                   ListTile(
                     leading: const Icon(Icons.settings),
                     title: const Text('設定'),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsPage()
-                        ),
-                      );
-                    }
+                    onTap: openSettingsPage,
                   ),
                 ],
               ),

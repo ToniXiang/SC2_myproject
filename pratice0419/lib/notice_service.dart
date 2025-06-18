@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
 class NoticeService{
-  static List<String> notices = [];
+  static List<Map<String,dynamic>> logs = [];
   static bool isNoticeEnabled = true;
-  final List<String> defaultNotices = [
-    "歡迎使用本應用程式！",
-    "請定期檢查更新以獲取最新功能。",
-    "如有任何問題，請聯繫我。",
-  ];
-  NoticeService() {
-    notices.addAll(defaultNotices);
-  }
-  static void addNotice(String notice) {
-    if (isNoticeEnabled) {
-      notices.add(notice);
-    }
+  static void addLog(String notice) {
+    if (!isNoticeEnabled) return;
+    logs.add({"message": notice, "timestamp": DateTime.now()});
   }
   static void removeAllNotices() {
-    notices.clear();
+    logs.clear();
   }
-  static Future<List<String>> getNotices() async {
-    return Future.value(notices);
+  static void removeNotice(int index) {
+    if (index >= 0 && index < logs.length) {
+      logs.removeAt(index);
+    }
   }
   static void showSnackBar(String message, BuildContext context) {
     if (!isNoticeEnabled) return;
+    addLog(message);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );

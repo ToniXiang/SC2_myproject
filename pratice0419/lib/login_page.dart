@@ -31,9 +31,8 @@ class LoginScreenState extends State<LoginScreen>{
         String username = responseData['username'] ?? "未知使用者";
         await saveToken(token);
         NoticeService.removeAllNotices();
-        NoticeService();
-        NoticeService.addNotice("登入成功，歡迎 $username");
-        showSnackBar("登入成功，歡迎 $username");
+        if (!mounted) return;
+        NoticeService.showSnackBar("登入成功，歡迎 $username",context);
         navigateToHomeScreen(username);
       }
       else{
@@ -43,11 +42,13 @@ class LoginScreenState extends State<LoginScreen>{
         setState((){
           isLoading=false;
         });
-        showSnackBar("登入失敗");
+        if (!mounted) return;
+        NoticeService.showSnackBar("登入失敗",context);
       } 
     }
     catch(e){
-      showSnackBar("無法連接到伺服器");
+      if (!mounted) return;
+      NoticeService.showSnackBar("無法連接到伺服器",context);
     }
   }
   void register() async {
@@ -61,23 +62,14 @@ class LoginScreenState extends State<LoginScreen>{
           'password': passwordController.text,
         },
       );
-      if (!mounted) return;
       String feedback = responseData['message'] ?? responseData['error'] ?? "未知錯誤";
-      showSnackBar(feedback);
+      if (!mounted) return;
+      NoticeService.showSnackBar(feedback,context);
     } catch (e) {
-      showSnackBar("無法連接到伺服器");
+      if (!mounted) return;
+      NoticeService.showSnackBar("無法連接到伺服器",context);
     } finally {
       isLoading = false;
-    }
-  }
-  void showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-      setState((){
-        isLoading=false;
-      });   
     }
   }
   void navigateToHomeScreen(String username) {

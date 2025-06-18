@@ -9,6 +9,10 @@ class SettingsPage extends StatefulWidget {
   SettingsPageState createState()=>SettingsPageState();
 }
 class SettingsPageState extends State<SettingsPage>{
+  @override
+  void initState() {
+    super.initState();
+  }
   void changeNotice(bool value) {
     if(value) {
       setState(() {
@@ -22,12 +26,24 @@ class SettingsPageState extends State<SettingsPage>{
       NoticeService.showSnackBar("通知已停用",context);
     }
   }
+  void getverificationCode() {
+    // 在這裡處理獲取驗證碼的邏輯
+    NoticeService.showSnackBar("尚未完成的功能",context);
+  }
   void changePassword() {
     // 在這裡處理更改密碼的邏輯
     NoticeService.showSnackBar("尚未完成的功能",context);
   }
+  void sentFeedback() {
+    // 在這裡處理用戶回饋的邏輯
+    NoticeService.showSnackBar("尚未完成的功能",context);
+  }
   @override
   Widget build(BuildContext context) {
+    final TextEditingController usernameController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    final TextEditingController verificationpasswordController = TextEditingController();
+    final TextEditingController verificationCodeController = TextEditingController();
     final themeNotifier = Provider.of<ThemeModeNotifier>(context);
     return Scaffold(
       appBar: AppBar(
@@ -44,22 +60,56 @@ class SettingsPageState extends State<SettingsPage>{
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const TextField(
-                      decoration: InputDecoration(
-                        labelText: '帳號名稱',
-                        hintText: '輸入您的帳號名稱',
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: '姓名',
+                        hintText: '輸入您的姓名',
                       ),
+                      controller: usernameController,
                     ),
-                    const TextField(
-                      decoration: InputDecoration(
-                        labelText: '帳號密碼',
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: '更改帳號密碼',
                         hintText: '輸入您的更改密碼',
                       ),
+                      controller:passwordController,
+                      obscureText: true,
+                    ),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: '確認更改帳號密碼',
+                        hintText: '再次輸入您的更改密碼',
+                      ),
+                      controller:verificationpasswordController,
+                      obscureText: true,
                     ),
                     const SizedBox(height:8),
-                    TextButton(
-                      onPressed: changePassword,
-                      child:const Text("儲存設定")
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children:[
+                        ElevatedButton(
+                          onPressed: getverificationCode,
+                          child: const Text("獲取驗證碼"),
+                    ),
+                      ]
+                    ),
+                    const SizedBox(height:8),
+                    TextField(
+                      decoration: const InputDecoration(
+                        labelText: '驗證碼',
+                        hintText: '輸入您收到的驗證碼',
+                      ),
+                      controller: verificationCodeController,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children:[
+                        ElevatedButton(
+                          onPressed: changePassword,
+                          child: const Text("更改密碼"),
+                        ),
+                      ]
                     )
                   ],
                 ),
@@ -89,7 +139,7 @@ class SettingsPageState extends State<SettingsPage>{
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween, // Adjust alignment as needed
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           '目前主題:',
@@ -186,6 +236,40 @@ class SettingsPageState extends State<SettingsPage>{
                 ),
               ),
               const SizedBox(height: 16),
+            ]
+          ),
+          ExpansionTile(
+            leading: Icon(Icons.feedback),
+            title: const Text('用戶回饋'),
+            children:[
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Text("如果您有任何建議或問題，請聯繫我們。"),
+                    const SizedBox(height: 8),
+                    const TextField(
+                      decoration: InputDecoration(
+                        labelText: '您的回饋',
+                        hintText: '請輸入您的回饋意見',
+                      ),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment:MainAxisAlignment.spaceBetween,
+                      children:[
+                        const Text("我們會盡快回覆您。"),
+                        TextButton(
+                          onPressed:sentFeedback,
+                          child: const Text("發送回饋")
+                        )
+                      ]
+                    ),
+                  ]
+                )
+              ),
             ]
           ),
         ],
