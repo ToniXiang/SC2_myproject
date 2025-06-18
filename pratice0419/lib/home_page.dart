@@ -4,8 +4,10 @@ import 'settings_page.dart';
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'ordersummary_screen.dart';
+import 'ordersummary.dart';
 import 'notice_service.dart';
+import 'notice_page.dart';
+import 'shopping_cart_page.dart';
 class HomeScreen extends StatefulWidget {
   final String username;
   const HomeScreen({super.key,required this.username});
@@ -16,6 +18,7 @@ class HomeScreenState extends State<HomeScreen>{
   late Future<List<Map<String, dynamic>>> _productsFuture;
   final storage = FlutterSecureStorage();
   final Set<int> selectedProducts = {};
+  int selectedPageIndex = 0;
   @override
   void initState() {
     super.initState();
@@ -127,16 +130,20 @@ class HomeScreenState extends State<HomeScreen>{
     if (!mounted) return;
     NoticeService.showSnackBar("刷新當前訂單完畢",context);
   }
+  void openShoppingCart(){
+    setState(() {
+      selectedPageIndex = 0;
+    });
+  }
   void openOrderSummary(){
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderSummaryScreen(
-          selectedProducts: selectedProducts,
-          productsFuture: _productsFuture,
-        ),
-      ),
-    );
+    setState(() {
+      selectedPageIndex = 1;
+    });
+  }
+  void openNotice(){
+    setState(() {
+      selectedPageIndex = 2;
+    });
   }
   void logOut(){
     showDialog(
@@ -170,60 +177,7 @@ class HomeScreenState extends State<HomeScreen>{
         }
       );        
   }
-  void showNoticeDialog() {
-    if (!mounted) return;
-    if (NoticeService.logs.isEmpty) {
-      NoticeService.addLog("沒有任何通知");
-      return;
-    }
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: const Text('通知'),
-              content: SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  itemCount: NoticeService.logs.length,
-                  itemBuilder: (context, index) {
-                    final log = NoticeService.logs[index];
-                    final timestamp = log['timestamp'] is DateTime
-                        ? (log['timestamp'] as DateTime).toLocal().toString()
-                        : log['timestamp'];
-                    return ListTile(
-                      title: Text(log['message']),
-                      subtitle: Text(
-                        timestamp,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          setState(() {
-                            NoticeService.removeNotice(index);
-                          });
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              actions: <Widget>[
-                ElevatedButton(
-                  child: const Text('關閉'),
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+  
   void openSettingsPage() async {
     await Navigator.push(
       context,
@@ -235,21 +189,100 @@ class HomeScreenState extends State<HomeScreen>{
       // Refresh the state after returning from settings
     });
   }
+  Widget getPageContent() {
+    switch (selectedPageIndex) {
+      case 0:
+        return HomeContent(
+          productsFuture: _productsFuture,
+          selectedProducts: selectedProducts,
+        );
+      case 1:
+        return OrderSummaryScreen(
+          productsFuture: _productsFuture,
+          selectedProducts: selectedProducts,
+        );
+      case 2:
+        return const NoticePage(); 
+      default:
+        return const Center(
+          child: Text('未知頁面'),
+        );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("首頁", style: TextStyle(color: Colors.white)),
-        actions:[
-          if(NoticeService.isNoticeEnabled)
-            IconButton(
-              icon:Icon(Icons.notifications, color: Colors.white),
-              onPressed:showNoticeDialog
-          )
-        ],
         iconTheme: const IconThemeData(color: Colors.white),
         backgroundColor: Colors.deepPurpleAccent,
+        bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(50.0),
+        child: Container(
+          color: Colors.deepPurpleAccent,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.shopping_cart,
+                      color: selectedPageIndex == 0 ? Colors.amber : Colors.white,
+                    ),
+                    onPressed: openShoppingCart,
+                  ),
+                  Text(
+                    "購物車",
+                    style: TextStyle(
+                      color: selectedPageIndex == 0 ? Colors.amber : Colors.white,
+                      fontSize: 12),
+                  ),
+                ],
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.book,
+                      color: selectedPageIndex == 1 ? Colors.amber : Colors.white,
+                    ),
+                    onPressed: openOrderSummary,
+                  ),
+                  Text(
+                    "當前訂單",
+                    style: TextStyle(
+                      color: selectedPageIndex == 1 ? Colors.amber : Colors.white,
+                      fontSize: 12),
+                  ),
+                ],
+              ),
+              if(NoticeService.isNoticeEnabled)
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                  IconButton(
+                    icon: Icon(
+                      Icons.notifications,
+                      color: selectedPageIndex == 2 ? Colors.amber : Colors.white,
+                    ),
+                    onPressed: openNotice,
+                  ),
+                  Text(
+                    "操作紀錄",
+                    style: TextStyle(
+                      color: selectedPageIndex == 2 ? Colors.amber : Colors.white,
+                      fontSize: 12),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
+    ),
     drawer: Drawer(
         child: Column(
           children: [
@@ -318,115 +351,29 @@ class HomeScreenState extends State<HomeScreen>{
           ],
         ),
       ),
-      body: HomeContent(
-        productsFuture: _productsFuture,
-        selectedProducts: selectedProducts,
+      body:getPageContent(),
+      bottomNavigationBar: Container(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          ElevatedButton(
+            onPressed: pushOrder,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+            ),
+            child: const Text("查看訂單明細",style: TextStyle(color: Colors.white)),
+          ),
+          ElevatedButton(
+            onPressed: removeOrder,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+            ),
+            child: const Text("清除訂單",style: TextStyle(color: Colors.white)),
+          ),
+          ]
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-          icon: const Icon(Icons.remove),
-          label: "清除訂單",
-          ),
-          BottomNavigationBarItem(
-          icon: const Icon(Icons.book),
-          label: "檢查訂單",
-          ),
-          BottomNavigationBarItem(
-          icon: const Icon(Icons.check),
-          label: "送出訂單",
-          ),
-        ],onTap: (index) {
-          switch(index){
-            case 0:
-              removeOrder();
-              break;
-            case 1:
-              openOrderSummary();
-              break;
-            case 2:
-              pushOrder();
-              break;
-            default:
-              break;
-          }
-        },
-      )
-    );
-  }
-}
-class HomeContent extends StatefulWidget {
-  final Future<List<Map<String, dynamic>>> productsFuture;
-  final Set<int> selectedProducts;
-  const HomeContent({super.key, required this.productsFuture, required this.selectedProducts});
-  @override
-  State<HomeContent> createState() => HomeContentState();
-}
-class HomeContentState extends State<HomeContent> {
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-        future: widget.productsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('沒有任何商品內容'));
-          } else {
-            final products = snapshot.data!;
-            return ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                final isSelected = widget.selectedProducts.contains(index);
-                return ListTile(
-                  title: Text(product['name']),
-                  subtitle: Text('\$${double.parse(product['price'].toString()).toStringAsFixed(2)}'),
-                  leading: Icon(
-                    isSelected ? Icons.check : Icons.shopping_cart,
-                    color: isSelected ? Colors.green : null,
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: () {
-                          setState(() {
-                            if (product['quantity'] > 1) {
-                              product['quantity']--;
-                            }
-                          });
-                        },
-                      ),
-                      Text(product['quantity'].toString()),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          setState(() {
-                            product['quantity']++;
-                          });
-                        },
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    setState(() {
-                      if (isSelected) {
-                        products[index]['quantity']=1;
-                        widget.selectedProducts.remove(index);
-                      } else {
-                        widget.selectedProducts.add(index);
-                      }
-                  });
-                },
-              );
-            },
-          );
-        }
-      },
     );
   }
 }
