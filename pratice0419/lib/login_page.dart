@@ -41,6 +41,9 @@ class LoginScreenState extends State<LoginScreen>{
         await saveToken(token);
         NoticeService.removeAllNotices();
         showSnackBar("登入成功，歡迎 $username");
+        setState((){
+          isLoading=false;
+        }); 
         navigateToHomeScreen(username);
       }
       else{
@@ -81,7 +84,7 @@ class LoginScreenState extends State<LoginScreen>{
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => HomeScreen(username: username),
+          builder: (context) => HomeScreen(),
         ),
       );
     }

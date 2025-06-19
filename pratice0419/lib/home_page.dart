@@ -9,8 +9,7 @@ import 'notice_service.dart';
 import 'notice_page.dart';
 import 'shopping_cart_page.dart';
 class HomeScreen extends StatefulWidget {
-  final String username;
-  const HomeScreen({super.key,required this.username});
+  const HomeScreen({super.key});
   @override
   HomeScreenState createState()=>HomeScreenState();
 }
@@ -290,31 +289,26 @@ class HomeScreenState extends State<HomeScreen>{
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  DrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
+                  SizedBox(
+                    height: 150,
+                    child: DrawerHeader(
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            '資工購物平台',
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child:Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          '資工購物平台',
-                          style: TextStyle(
-                            fontSize: 24,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          '歡迎, ${widget.username}!',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    )
                   ),
                   ListTile(
                     leading: const Icon(Icons.home),
@@ -353,27 +347,53 @@ class HomeScreenState extends State<HomeScreen>{
       ),
       body:getPageContent(),
       bottomNavigationBar: Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          ElevatedButton(
-            onPressed: pushOrder,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-            ),
-            child: const Text("查看訂單明細",style: TextStyle(color: Colors.white)),
-          ),
-          ElevatedButton(
-            onPressed: removeOrder,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-            ),
-            child: const Text("清除訂單",style: TextStyle(color: Colors.white)),
-          ),
-          ]
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child:  selectedPageIndex != 2
+          ? DownOperations(
+            onPushOrder: pushOrder,
+            onRemoveOrder: removeOrder,
+            )
+          : const SizedBox(height: 0, width: 0)
       ),
+    );
+  }
+}
+class DownOperations extends StatelessWidget {
+  final VoidCallback onPushOrder;
+  final VoidCallback onRemoveOrder;
+
+  const DownOperations({
+    super.key,
+    required this.onPushOrder,
+    required this.onRemoveOrder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ElevatedButton(
+          onPressed: onPushOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blueAccent,
+          ),
+          child: const Text(
+            "查看訂單明細",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        ElevatedButton(
+          onPressed: onRemoveOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+          ),
+          child: const Text(
+            "清除訂單",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+      ],
     );
   }
 }

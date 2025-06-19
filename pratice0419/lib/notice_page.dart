@@ -25,7 +25,8 @@ class NoticePageState extends State<NoticePage> {
                   child: ListView.builder(
                     itemCount: NoticeService.logs.length,
                     itemBuilder: (context, index) {
-                      final log = NoticeService.logs[index];
+                      final reverseIndex = NoticeService.logs.length - 1 - index;
+                      final log = NoticeService.logs[reverseIndex];
                       final timestamp = log['timestamp'] is DateTime
                           ? (log['timestamp'] as DateTime).toLocal().toString()
                           : log['timestamp'];
@@ -39,7 +40,7 @@ class NoticePageState extends State<NoticePage> {
                           icon: const Icon(Icons.close),
                           onPressed: () {
                             setState(() {
-                              NoticeService.removeNotice(index);
+                              NoticeService.removeNotice(reverseIndex);
                             });
                           },
                         ),
