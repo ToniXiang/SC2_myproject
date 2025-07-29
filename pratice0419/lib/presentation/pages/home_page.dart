@@ -1,11 +1,11 @@
 import 'login_page.dart';
-import 'order_history.dart';
+import 'order_history_page.dart';
 import 'settings_page.dart';
 import 'package:flutter/material.dart';
-import 'api_service.dart';
+import '../../data/services/api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'ordersummary.dart';
-import 'notice_service.dart';
+import 'order_summary_page.dart';
+import '../../data/services/notice_service.dart';
 import 'notice_page.dart';
 import 'shopping_cart_page.dart';
 class HomeScreen extends StatefulWidget {

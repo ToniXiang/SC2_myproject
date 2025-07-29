@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'login_page.dart';
-import 'thememodenotifier.dart';
+import 'presentation/pages/login_page.dart';
+import 'presentation/providers/theme_provider.dart';
+import 'core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'dart:io';
-const double windowWidth = 400;
-const double windowHeight = 800;
 void setupWindow() {
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +15,7 @@ void setupWindow() {
       appWindow.maxSize = initialSize;
       appWindow.size = initialSize;
       appWindow.alignment = Alignment.center;
-      appWindow.title = "資工購物平台";
+      appWindow.title = AppConfig.appTitle;
       appWindow.show();
     });
   }

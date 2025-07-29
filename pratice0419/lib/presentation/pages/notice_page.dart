@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'notice_service.dart';
+import '../../data/services/notice_service.dart';
 
 class NoticePage extends StatefulWidget {
   const NoticePage({super.key});

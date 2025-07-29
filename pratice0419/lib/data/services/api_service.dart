@@ -1,13 +1,13 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../core/constants/app_constants.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://sc2-myproject.onrender.com/api/';
   /// Sends a POST request to the specified endpoint with the given body.
   static Future<Map<String, dynamic>> postRequest(
       String endpoint, Map<String, dynamic> body,
       {String? token}) async {
-    final url = Uri.parse('$baseUrl$endpoint');
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
     try {
       final response = await http.post(
         url,
@@ -32,7 +32,7 @@ class ApiService {
 
   /// Sends a GET request to the specified endpoint.
   static Future<List<dynamic>> getRequest(String endpoint, {String? token}) async {
-    final url = Uri.parse('$baseUrl$endpoint');
+    final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
     try {
       final response = await http.get(
         url,

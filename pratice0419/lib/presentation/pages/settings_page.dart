@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; 
 import 'package:url_launcher/url_launcher.dart';
-import 'thememodenotifier.dart';
-import 'notice_service.dart';
+import '../providers/theme_provider.dart';
+import '../../data/services/notice_service.dart';
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
   @override
