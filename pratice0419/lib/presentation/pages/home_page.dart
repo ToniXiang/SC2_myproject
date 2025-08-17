@@ -25,7 +25,7 @@ class HomeScreenState extends State<HomeScreen>{
   }
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     try {
-      final data = await ApiService.getRequest('products/');
+      final data = await ApiService.getRequest('api/products/');
       return data.map((product) {
         return {
           'name': product['name'],

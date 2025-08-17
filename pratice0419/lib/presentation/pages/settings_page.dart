@@ -167,28 +167,9 @@ class SettingsPageState extends State<SettingsPage>{
             leading: Icon(Icons.info),
             title: const Text('關於'),
             children:[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text("資工購物平台", style:TextStyle(fontSize: 14,fontWeight:FontWeight.bold)),
-              ),
-              Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text("軟體介紹: 這是一個簡單的購物應用程式。"),
-                    SizedBox(height: 8),
-                    Text("1.登入與註冊頁面"),
-                    Text("2.主頁面(商品列表)"),
-                    Text("3.過去的訂單"),
-                    Text("4.登出"),
-                    Text("5.設定"),
-                  ]
-                )
-              ),
               InkWell(
                 onTap: () async {
-                  const url = 'https://github.com/ChenGuoXiang940/SC2_myproject';
+                  const url = 'https://chenguoxiang940.github.io/project.html';
                   final Uri uri = Uri.parse(url);
                   if (await canLaunchUrl(uri) && context.mounted) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -209,7 +190,7 @@ class SettingsPageState extends State<SettingsPage>{
               const SizedBox(height:16),
               InkWell(
                 onTap: () async {
-                  const url = 'https://sc2-myproject.onrender.com/';
+                  const url = 'https://chenguoxiang940.github.io/project.html';
                   final Uri uri = Uri.parse(url);
                   if (await canLaunchUrl(uri) && context.mounted) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);

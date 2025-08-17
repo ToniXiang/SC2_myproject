@@ -29,7 +29,7 @@ class LoginScreenState extends State<LoginScreen>{
         isLoading=true;
       });      
       final responseData = await ApiService.postRequest(
-        'login/',
+        'api/login/',
         {
           'email': emailController.text,
           'password': passwordController.text,
@@ -64,7 +64,7 @@ class LoginScreenState extends State<LoginScreen>{
     try {
       isLoading = true;
       final responseData = await ApiService.postRequest(
-        'register/',
+        'api/register/',
         {
           'email': emailController.text,
           'username': usernameController.text,

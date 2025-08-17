@@ -4,7 +4,7 @@ const double windowHeight = 800;
 
 // API 設定
 class ApiConstants {
-  static const String baseUrl = 'https://sc2-myproject.onrender.com/api/';
+  static const String baseUrl = 'http://127.0.0.1:8000/';//本地測試用
 }
 
 // 應用程式設定

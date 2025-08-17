@@ -13,7 +13,7 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Future<List<Map<String, dynamic>>> fetchOrderHistory() async {
     try {
       final token = await storage.read(key: 'auth_token');
-      final List<dynamic> orders = await ApiService.getRequest('orders/', token: token);
+      final List<dynamic> orders = await ApiService.getRequest('api/orders/', token: token);
       final List<dynamic> orderItems = orders.expand((order) => order['items']).toList();
       return orderItems.map((item) {
         return {

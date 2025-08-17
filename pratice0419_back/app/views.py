@@ -28,7 +28,7 @@ def register(request):
     username = request.data.get('username')
     email = request.data.get('email')
     password = request.data.get('password')
-
+    
     if not username or not email or not password:
         return Response({'error': '需要完整郵件、名稱與密碼'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
