@@ -1,28 +1,17 @@
-import 'home_page.dart';
-import 'package:flutter/material.dart';
-import '../../data/services/api_service.dart';
-import '../../data/services/notice_service.dart';
+import 'package:pratice0419/presentation/presentation.dart';
+import 'package:pratice0419/data/data.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
   @override
-  LoginScreenState createState()=>LoginScreenState();
+  LoginPageState createState()=>LoginPageState();
 }
-class LoginScreenState extends State<LoginScreen>{
+class LoginPageState extends State<LoginPage>{
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final storage = FlutterSecureStorage();
   bool isLoading=false;
-  void showSnackBar(String message) {
-    // 不紀錄登入或註冊的錯誤訊息
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
   void login() async {
     try{
       setState((){
@@ -39,12 +28,13 @@ class LoginScreenState extends State<LoginScreen>{
         String token = responseData['token'] ?? "未知Token";
         String username = responseData['username'] ?? "未知使用者";
         await saveToken(token);
-        NoticeService.removeAllNotices();
-        showSnackBar("登入成功，歡迎 $username");
+        if (mounted) {
+          MessageService.showMessage(context, "登入成功，歡迎 $username");
+        }
         setState((){
           isLoading=false;
-        }); 
-        navigateToHomeScreen(username);
+        });
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
       }
       else{
         emailController.clear();
@@ -53,11 +43,18 @@ class LoginScreenState extends State<LoginScreen>{
         setState((){
           isLoading=false;
         });
-        showSnackBar("登入失敗");
-      } 
+        if (mounted) {
+          MessageService.showMessage(context, "登入失敗");
+        }
+      }
     }
     catch(e){
-      showSnackBar("無法連接到伺服器");
+      if (mounted) {
+        MessageService.showMessage(context, "無法連接到伺服器");
+      }
+      setState((){
+        isLoading=false;
+      });
     }
   }
   void register() async {
@@ -72,21 +69,15 @@ class LoginScreenState extends State<LoginScreen>{
         },
       );
       String feedback = responseData['message'] ?? responseData['error'] ?? "未知錯誤";
-      showSnackBar(feedback);
+      if (mounted) {
+        MessageService.showMessage(context, feedback);
+      }
     } catch (e) {
-      showSnackBar("無法連接到伺服器");
+      if (mounted) {
+        MessageService.showMessage(context, "無法連接到伺服器");
+      }
     } finally {
       isLoading = false;
-    }
-  }
-  void navigateToHomeScreen(String username) {
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(),
-        ),
-      );
     }
   }
   Future<void> saveToken(String token) async {
@@ -116,6 +107,7 @@ class LoginScreenState extends State<LoginScreen>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            const FlutterLogo(size: 100),
             const Text(
               "資工購物平台",
               style: TextStyle(

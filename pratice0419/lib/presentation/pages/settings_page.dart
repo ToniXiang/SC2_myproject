@@ -1,50 +1,42 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; 
+import 'package:pratice0419/presentation/presentation.dart';
+import 'package:provider/provider.dart';
+import 'package:pratice0419/data/data.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../providers/theme_provider.dart';
-import '../../data/services/notice_service.dart';
+import 'package:pratice0419/core/core.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
   @override
-  SettingsPageState createState()=>SettingsPageState();
+  SettingsPageState createState() => SettingsPageState();
 }
-class SettingsPageState extends State<SettingsPage>{
-  void changeNotice(bool value) {
-    if(value) {
-      setState(() {
-        NoticeService.isNoticeEnabled = true;
-      });
-      NoticeService.showSnackBar("通知已啟用", context);
-    } else {
-      setState(() {
-        NoticeService.isNoticeEnabled = false;
-      });
-      NoticeService.showSnackBar("通知已停用",context);
-    }
-  }
+
+class SettingsPageState extends State<SettingsPage> {
   void getverificationCode() {
     // 在這裡處理獲取驗證碼的邏輯
-    NoticeService.showSnackBar("尚未完成的功能",context);
+    MessageService.showMessage(context, "尚未完成的功能");
   }
+
   void changePassword() {
     // 在這裡處理更改密碼的邏輯
-    NoticeService.showSnackBar("尚未完成的功能",context);
+    MessageService.showMessage(context, "尚未完成的功能");
   }
+
   void sentFeedback() {
     // 在這裡處理用戶回饋的邏輯
-    NoticeService.showSnackBar("尚未完成的功能",context);
+    MessageService.showMessage(context, "尚未完成的功能");
   }
+
   @override
   Widget build(BuildContext context) {
+    String themeName = Provider.of<ThemeProvider>(context).getThemeName();
     final TextEditingController usernameController = TextEditingController();
     final TextEditingController passwordController = TextEditingController();
-    final TextEditingController verificationpasswordController = TextEditingController();
-    final TextEditingController verificationCodeController = TextEditingController();
-    final themeNotifier = Provider.of<ThemeModeNotifier>(context);
+    final TextEditingController verificationpasswordController =
+        TextEditingController();
+    final TextEditingController verificationCodeController =
+        TextEditingController();
     return Scaffold(
-      appBar: AppBar(
-        title: Text('設定'),
-      ),
+      appBar: AppBar(title: Text('設定')),
       body: ListView(
         children: [
           ExpansionTile(
@@ -68,7 +60,7 @@ class SettingsPageState extends State<SettingsPage>{
                         labelText: '更改帳號密碼',
                         hintText: '輸入您的更改密碼',
                       ),
-                      controller:passwordController,
+                      controller: passwordController,
                       obscureText: true,
                     ),
                     TextField(
@@ -76,20 +68,20 @@ class SettingsPageState extends State<SettingsPage>{
                         labelText: '確認更改帳號密碼',
                         hintText: '再次輸入您的更改密碼',
                       ),
-                      controller:verificationpasswordController,
+                      controller: verificationpasswordController,
                       obscureText: true,
                     ),
-                    const SizedBox(height:8),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children:[
+                      children: [
                         ElevatedButton(
                           onPressed: getverificationCode,
                           child: const Text("獲取驗證碼"),
+                        ),
+                      ],
                     ),
-                      ]
-                    ),
-                    const SizedBox(height:8),
+                    const SizedBox(height: 8),
                     TextField(
                       decoration: const InputDecoration(
                         labelText: '驗證碼',
@@ -100,35 +92,22 @@ class SettingsPageState extends State<SettingsPage>{
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
-                      children:[
+                      children: [
                         ElevatedButton(
                           onPressed: changePassword,
                           child: const Text("更改密碼"),
                         ),
-                      ]
-                    )
+                      ],
+                    ),
                   ],
                 ),
               ),
             ],
           ),
           ExpansionTile(
-            leading: const Icon(Icons.notifications),
-            title: const Text('通知設定'),
-            children: [
-              SwitchListTile(
-                  value: NoticeService.isNoticeEnabled,
-                  title: const Text('啟用通知'),
-                  onChanged: (value) {
-                    changeNotice(value);
-                  },
-              ),
-            ],
-          ),
-          ExpansionTile(
             leading: Icon(Icons.draw),
             title: const Text('偏好'),
-            children:[
+            children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -137,67 +116,62 @@ class SettingsPageState extends State<SettingsPage>{
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          '目前主題:',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                        const Text('目前主題:', style: TextStyle(fontSize: 16)),
                         DropdownButton<String>(
-                          value: themeNotifier.themeMode,
-                          items: <String>['淺色模式', '深色模式']
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
+                          value: themeName,
+                          items:
+                              <String>[
+                                '淺色模式',
+                                '深色模式',
+                                '系統預設',
+                              ].map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
                           onChanged: (String? newValue) {
                             if (newValue != null) {
-                              themeNotifier.setThemeMode(newValue);
+                              setState(() {
+                                themeName = newValue;
+                              });
+                              final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+                                  switch (newValue) {
+                                    case '淺色模式':
+                                      themeProvider.setThemeMode(AppThemeMode.light);
+                                      break;
+                                    case '深色模式':
+                                      themeProvider.setThemeMode(AppThemeMode.dark);
+                                      break;
+                                    case '系統預設':
+                                      themeProvider.setThemeMode(AppThemeMode.system);
+                                      break;
+                                  }
                             }
                           },
                         ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
-            ]
+            ],
           ),
           ExpansionTile(
             leading: Icon(Icons.info),
             title: const Text('關於'),
-            children:[
+            children: [
+              const SizedBox(height: 16),
               InkWell(
                 onTap: () async {
-                  const url = 'https://chenguoxiang940.github.io/project.html';
+                  const url = 'https://github.com/ChenGuoXiang940/SC2_myproject';
                   final Uri uri = Uri.parse(url);
                   if (await canLaunchUrl(uri) && context.mounted) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("不能開啟網址")),
-                    );
-                  }
-                },
-                child: const Text(
-                  "github 儲存庫網址",
-                  style: TextStyle(
-                    color: Colors.blue,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-              const SizedBox(height:16),
-              InkWell(
-                onTap: () async {
-                  const url = 'https://chenguoxiang940.github.io/project.html';
-                  final Uri uri = Uri.parse(url);
-                  if (await canLaunchUrl(uri) && context.mounted) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("不能開啟網址")),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text("不能開啟網址")));
                   }
                 },
                 child: Container(
@@ -206,48 +180,11 @@ class SettingsPageState extends State<SettingsPage>{
                     color: Colors.green,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(
-                    '介紹網站',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: Text('github 儲存庫', style: TextStyle(color: Colors.white)),
                 ),
               ),
               const SizedBox(height: 16),
-            ]
-          ),
-          ExpansionTile(
-            leading: Icon(Icons.feedback),
-            title: const Text('用戶回饋'),
-            children:[
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text("如果您有任何建議或問題，請聯繫我們。"),
-                    const SizedBox(height: 8),
-                    const TextField(
-                      decoration: InputDecoration(
-                        labelText: '您的回饋',
-                        hintText: '請輸入您的回饋意見',
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment:MainAxisAlignment.spaceBetween,
-                      children:[
-                        const Text("我們會盡快回覆您。"),
-                        TextButton(
-                          onPressed:sentFeedback,
-                          child: const Text("發送回饋")
-                        )
-                      ]
-                    ),
-                  ]
-                )
-              ),
-            ]
+            ],
           ),
         ],
       ),

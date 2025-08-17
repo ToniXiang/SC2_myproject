@@ -38,6 +38,7 @@ def register(request):
     user = User.objects.create_user(username=username, email=email, password=password)
     return Response({'message': '註冊成功',
     },status=status.HTTP_201_CREATED, content_type='application/json; charset=utf-8')
+@permission_classes([AllowAny])
 class CustomAuthToken(ObtainAuthToken):
     """
     登入 API：使用電子郵件和密碼進行驗證。

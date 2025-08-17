@@ -1,19 +1,14 @@
-import 'login_page.dart';
-import 'order_history_page.dart';
-import 'settings_page.dart';
-import 'package:flutter/material.dart';
-import '../../data/services/api_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'order_summary_page.dart';
-import '../../data/services/notice_service.dart';
-import 'notice_page.dart';
-import 'shopping_cart_page.dart';
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+import 'package:pratice0419/presentation/presentation.dart';
+import 'package:pratice0419/data/data.dart';
+
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
   @override
-  HomeScreenState createState()=>HomeScreenState();
+  HomePageState createState() => HomePageState();
 }
-class HomeScreenState extends State<HomeScreen>{
+
+class HomePageState extends State<HomePage> {
   late Future<List<Map<String, dynamic>>> _productsFuture;
   final storage = FlutterSecureStorage();
   final Set<int> selectedProducts = {};
@@ -23,6 +18,7 @@ class HomeScreenState extends State<HomeScreen>{
     super.initState();
     _productsFuture = fetchProducts();
   }
+
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     try {
       final data = await ApiService.getRequest('api/products/');
@@ -37,33 +33,33 @@ class HomeScreenState extends State<HomeScreen>{
       throw Exception('伺服器內部錯誤');
     }
   }
+
   void placeOrder() async {
-    if (selectedProducts.isEmpty){
+    if (selectedProducts.isEmpty) {
       if (!mounted) return;
-      NoticeService.showSnackBar("未選取任何商品",context);
+      MessageService.showMessage(context, "未選取任何商品");
       return;
     }
     final products = await _productsFuture;
-    final selectedItems = selectedProducts.map((index) {
-    final product = products[index];
-      return {
-        'product_name': product['name'],
-        'product_price': product['price'],
-        'quantity': product['quantity'],
-      };
-    }).toList();
+    final selectedItems =
+        selectedProducts.map((index) {
+          final product = products[index];
+          return {
+            'product_name': product['name'],
+            'product_price': product['price'],
+            'quantity': product['quantity'],
+          };
+        }).toList();
     try {
       final token = await storage.read(key: 'auth_token');
-      await ApiService.postRequest(
-        'orders/',
-        {'products': selectedItems},
-        token: token,
-      );
+      await ApiService.postRequest('api/orders/', {
+        'products': selectedItems,
+      }, token: token);
       if (!mounted) return;
-      NoticeService.showSnackBar("訂單送出成功",context);
+      MessageService.showMessage(context, "訂單送出成功");
     } catch (e) {
-      if(!mounted) return;
-      NoticeService.showSnackBar("訂單送出失敗",context);
+      if (!mounted) return;
+      MessageService.showMessage(context, "訂單送出失敗");
       return;
     }
     setState(() {
@@ -73,52 +69,59 @@ class HomeScreenState extends State<HomeScreen>{
       selectedProducts.clear();
     });
   }
-  void pushOrder()async{
+
+  void pushOrder() async {
     final products = await _productsFuture;
-    double total=0;
+    double total = 0;
     if (!mounted) return;
     showDialog(
-      context:context,
-      builder:(BuildContext context){
+      context: context,
+      builder: (BuildContext context) {
         return AlertDialog(
-          title:const Text("訂單明細"),
-          content:SingleChildScrollView(
+          title: const Text("訂單明細"),
+          content: SingleChildScrollView(
             child: ListBody(
-              children: selectedProducts.map((index) {
-                final product = products[index];
-                total+=double.parse(product['price'])*product['quantity'];
-                return ListTile(
-                  title: Text(product['name']),
-                  subtitle: Text('數量: ${product['quantity']}'),
-                  trailing: Text('\$${(double.parse(product['price'])*product['quantity']).toStringAsFixed(2)}'),
-                );
-            }).toList(),
+              children:
+                  selectedProducts.map((index) {
+                    final product = products[index];
+                    total +=
+                        double.parse(product['price']) * product['quantity'];
+                    return ListTile(
+                      title: Text(product['name']),
+                      subtitle: Text('數量: ${product['quantity']}'),
+                      trailing: Text(
+                        '\$${(double.parse(product['price']) * product['quantity']).toStringAsFixed(2)}',
+                      ),
+                    );
+                  }).toList(),
+            ),
           ),
-          ),
-          actions:[
+          actions: [
             Text("總共\$${total.toStringAsFixed(2)}"),
             Row(
-              children:[
+              children: [
                 ElevatedButton(
-                  onPressed:(){
+                  onPressed: () {
                     placeOrder();
                     Navigator.of(context).pop();
                   },
-                  child:const Text("送出")
+                  child: const Text("送出"),
                 ),
                 TextButton(
-                  onPressed:(){
+                  onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child:const Text("關閉")
+                  child: const Text("關閉"),
                 ),
-            ])
-          ]
+              ],
+            ),
+          ],
         );
-      }
+      },
     );
   }
-  void removeOrder()async{
+
+  void removeOrder() async {
     final products = await _productsFuture;
     setState(() {
       for (var product in products) {
@@ -127,237 +130,23 @@ class HomeScreenState extends State<HomeScreen>{
       selectedProducts.clear();
     });
     if (!mounted) return;
-    NoticeService.showSnackBar("刷新當前訂單完畢",context);
+    MessageService.showMessage(context, "刷新當前訂單完畢");
   }
-  void openShoppingCart(){
-    setState(() {
-      selectedPageIndex = 0;
-    });
-  }
-  void openOrderSummary(){
-    setState(() {
-      selectedPageIndex = 1;
-    });
-  }
-  void openNotice(){
-    setState(() {
-      selectedPageIndex = 2;
-    });
-  }
-  void logOut(){
-    showDialog(
-        context:context,
-        builder:(BuildContext context){
-          return AlertDialog(
-            title: const Text('登出'),
-            content: const Text('確定要登出嗎?'),
-            actions: <Widget>[
-              ElevatedButton(
-                child: const Text('確定'),
-                onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
-                    ),
-                    (route) => false,
-                  );
-                },
-              ),
-              TextButton(
-                child: const Text('取消'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        }
-      );        
-  }
-  
-  void openSettingsPage() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SettingsPage(),
-      ),
-    );
-    setState(() {
-      // Refresh the state after returning from settings
-    });
-  }
-  Widget getPageContent() {
-    switch (selectedPageIndex) {
-      case 0:
-        return HomeContent(
-          productsFuture: _productsFuture,
-          selectedProducts: selectedProducts,
-        );
-      case 1:
-        return OrderSummaryScreen(
-          productsFuture: _productsFuture,
-          selectedProducts: selectedProducts,
-        );
-      case 2:
-        return const NoticePage(); 
-      default:
-        return const Center(
-          child: Text('未知頁面'),
-        );
-    }
-  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("首頁", style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: Colors.deepPurpleAccent,
-        bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(50.0),
-        child: Container(
-          color: Colors.deepPurpleAccent,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.shopping_cart,
-                      color: selectedPageIndex == 0 ? Colors.amber : Colors.white,
-                    ),
-                    onPressed: openShoppingCart,
-                  ),
-                  Text(
-                    "購物車",
-                    style: TextStyle(
-                      color: selectedPageIndex == 0 ? Colors.amber : Colors.white,
-                      fontSize: 12),
-                  ),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.book,
-                      color: selectedPageIndex == 1 ? Colors.amber : Colors.white,
-                    ),
-                    onPressed: openOrderSummary,
-                  ),
-                  Text(
-                    "當前訂單",
-                    style: TextStyle(
-                      color: selectedPageIndex == 1 ? Colors.amber : Colors.white,
-                      fontSize: 12),
-                  ),
-                ],
-              ),
-              if(NoticeService.isNoticeEnabled)
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.notifications,
-                      color: selectedPageIndex == 2 ? Colors.amber : Colors.white,
-                    ),
-                    onPressed: openNotice,
-                  ),
-                  Text(
-                    "操作紀錄",
-                    style: TextStyle(
-                      color: selectedPageIndex == 2 ? Colors.amber : Colors.white,
-                      fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      appBar: const CustomAppBar(),
+      body: HomeContent(
+        productsFuture: _productsFuture,
+        selectedProducts: selectedProducts,
       ),
-    ),
-    drawer: Drawer(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  SizedBox(
-                    height: 150,
-                    child: DrawerHeader(
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            '資工購物平台',
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.home),
-                    title: const Text('首頁'),
-                    onTap: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.history),
-                    title: const Text('訂單'),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const OrderHistoryScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.logout),
-                    title: const Text('登出'),
-                    onTap: logOut,
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.settings),
-                    title: const Text('設定'),
-                    onTap: openSettingsPage,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-      body:getPageContent(),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child:  selectedPageIndex != 2
-          ? DownOperations(
-            onPushOrder: pushOrder,
-            onRemoveOrder: removeOrder,
-            )
-          : const SizedBox(height: 0, width: 0)
-      ),
+      drawer: const CustomDrawer(),
+      bottomNavigationBar: const BottomBar(currentIndex: 0),
     );
   }
 }
+
 class DownOperations extends StatelessWidget {
   final VoidCallback onPushOrder;
   final VoidCallback onRemoveOrder;
@@ -375,23 +164,13 @@ class DownOperations extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: onPushOrder,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blueAccent,
-          ),
-          child: const Text(
-            "查看訂單明細",
-            style: TextStyle(color: Colors.white),
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
+          child: const Text("查看訂單明細", style: TextStyle(color: Colors.white)),
         ),
         ElevatedButton(
           onPressed: onRemoveOrder,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-          ),
-          child: const Text(
-            "清除訂單",
-            style: TextStyle(color: Colors.white),
-          ),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+          child: const Text("清除訂單", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

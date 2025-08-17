@@ -1,13 +1,12 @@
-import 'package:flutter/material.dart';
-import '../../data/services/api_service.dart';
+import 'package:pratice0419/presentation/presentation.dart';
+import 'package:pratice0419/data/data.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../data/services/notice_service.dart';
-class OrderHistoryScreen extends StatefulWidget {
-  const OrderHistoryScreen({super.key});
+class OrderHistoryPage extends StatefulWidget {
+  const OrderHistoryPage({super.key});
   @override
-  OrderHistoryScreenState createState() => OrderHistoryScreenState();
+  State<OrderHistoryPage> createState() => _OrderHistoryPageState();
 }
-class OrderHistoryScreenState extends State<OrderHistoryScreen> {
+class _OrderHistoryPageState extends State<OrderHistoryPage> {
   late Future<List<Map<String, dynamic>>> _orderHistoryFuture;
   final storage = const FlutterSecureStorage();
   Future<List<Map<String, dynamic>>> fetchOrderHistory() async {
@@ -25,7 +24,7 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
       }).toList();
     }catch (e) {
       if(!mounted) return [];
-      NoticeService.showSnackBar("無法獲取訂單歷史", context);
+      MessageService.showMessage(context, "無法獲取訂單歷史");
       return [];
     }
   }
@@ -38,11 +37,7 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("訂單", style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: Colors.deepPurpleAccent,
-      ),
+      appBar: const CustomAppBar(),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _orderHistoryFuture,
         builder: (context, snapshot) {
@@ -83,6 +78,8 @@ class OrderHistoryScreenState extends State<OrderHistoryScreen> {
           }
         },
       ),
+      drawer: const CustomDrawer(),
+      bottomNavigationBar: const BottomBar(currentIndex: 1),
     );
   }
 }
