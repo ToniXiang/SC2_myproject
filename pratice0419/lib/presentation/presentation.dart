@@ -1,10 +1,12 @@
 export 'package:flutter/material.dart';
 export 'pages/login_page.dart';
 export 'pages/home_page.dart';
+export 'pages/classification_page.dart';
 export 'pages/settings_page.dart';
 export 'pages/order_history_page.dart';
 export 'pages/shopping_cart_page.dart';
 export 'pages/account_page.dart';
+export 'pages/helper_page.dart';
 export 'pages/common/drawer.dart';
 export 'pages/common/app_bar.dart';
 export 'pages/common/bottom_bar.dart';

@@ -1,85 +1,113 @@
 import 'package:pratice0419/presentation/presentation.dart';
-import 'package:pratice0419/data/data.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pratice0419/data/data.dart';
+
 class OrderHistoryPage extends StatefulWidget {
   const OrderHistoryPage({super.key});
+
   @override
   State<OrderHistoryPage> createState() => _OrderHistoryPageState();
 }
+
 class _OrderHistoryPageState extends State<OrderHistoryPage> {
-  late Future<List<Map<String, dynamic>>> _orderHistoryFuture;
+  late Future<List<dynamic>> _ordersFuture;
   final storage = const FlutterSecureStorage();
-  Future<List<Map<String, dynamic>>> fetchOrderHistory() async {
-    try {
-      final token = await storage.read(key: 'auth_token');
-      final List<dynamic> orders = await ApiService.getRequest('api/orders/', token: token);
-      final List<dynamic> orderItems = orders.expand((order) => order['items']).toList();
-      return orderItems.map((item) {
-        return {
-          'id': item['id'],
-          'product_name': item['product_name'],
-          'product_price': item['product_price'],
-          'quantity': item['quantity'],
-        };
-      }).toList();
-    }catch (e) {
-      if(!mounted) return [];
-      MessageService.showMessage(context, "無法獲取訂單歷史");
-      return [];
-    }
-  }
 
   @override
   void initState() {
     super.initState();
-    _orderHistoryFuture = fetchOrderHistory();
+    _ordersFuture = fetchOrders();
   }
+
+  Future<List<dynamic>> fetchOrders() async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      final data = await ApiService.getRequest('api/orders/', token: token);
+      return data;
+    } catch (e) {
+      throw Exception('取得訂單失敗');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: FutureBuilder<List<Map<String, dynamic>>>(
-        future: _orderHistoryFuture,
+      body: FutureBuilder<List<dynamic>>(
+        future: _ordersFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text("錯誤: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('沒有任何訂單內容'));
-          } else {
-            final orderHistory = snapshot.data!;
-            return ListView.builder(
-              itemCount: orderHistory.length,
-              itemBuilder: (context, index) {
-                final order = orderHistory[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                  elevation: 4,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Order ID: ${order['id']}',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Product: ${order['product_name']}'),
-                        Text('Price: \$${double.parse(order['product_price'].toString()).toStringAsFixed(2)}'),
-                        Text('Quantity: ${order['quantity']}'),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
+            return const Center(child: Text("目前沒有任何訂單"));
           }
+
+          final orders = snapshot.data!;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(12),
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+              final order = orders[index];
+              final orderId = order['id'];
+              final createdAt = DateTime.parse(order['created_at']);
+              final items = order['items'] as List<dynamic>;
+
+              double total = 0;
+              for (var item in items) {
+                total += double.parse(item['product_price']) * item['quantity'];
+              }
+
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+                child: ExpansionTile(
+                  leading: const Icon(Icons.receipt_long),
+                  title: Text("訂單 #$orderId"),
+                  subtitle: Text(
+                    "建立於 ${createdAt.toLocal()}".split(".")[0],
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  children: [
+                    Column(
+                      children: items.map((item) {
+                        return ListTile(
+                          title: Text(item['product_name']),
+                          subtitle: Text("數量: ${item['quantity']}"),
+                          trailing: Text(
+                            "\$${(double.parse(item['product_price']) * item['quantity']).toStringAsFixed(2)}",
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const Divider(),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text("總計: \$${total.toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
         },
       ),
       drawer: const CustomDrawer(),
-      bottomNavigationBar: const BottomBar(currentIndex: 1),
+      bottomNavigationBar: const CustomBottomBar(currentIndex: 2),
     );
   }
 }

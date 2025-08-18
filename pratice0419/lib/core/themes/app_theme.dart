@@ -9,8 +9,13 @@ class AppTheme {
       color: Colors.black,
       fontSize: 20,
       fontWeight: FontWeight.bold,
-      fontFamily: 'NotoSansTC',
     ),
+  );
+  static const _bottomNavigationBarTheme = BottomNavigationBarThemeData(
+    selectedItemColor: Color(0xff0d61ae),
+    unselectedItemColor: Color(0xFF938F99),
+    selectedLabelStyle: TextStyle(fontSize: 10),
+    unselectedLabelStyle: TextStyle(fontSize: 10),
   );
   static ThemeData get lightTheme {
     return ThemeData(
@@ -28,6 +33,7 @@ class AppTheme {
         secondaryContainer: const Color(0xffecc45a),
       ),
       appBarTheme: _appBarTheme,
+      bottomNavigationBarTheme: _bottomNavigationBarTheme,
     );
   }
 
@@ -49,6 +55,7 @@ class AppTheme {
         secondaryContainer: const Color(0xffecc45a),
       ),
       appBarTheme: _appBarTheme,
+      bottomNavigationBarTheme: _bottomNavigationBarTheme,
     );
   }
 }

@@ -1,14 +1,14 @@
 import 'package:pratice0419/presentation/presentation.dart';
 
-class BottomBar extends StatefulWidget {
+class CustomBottomBar extends StatefulWidget {
   final int currentIndex;
-  const BottomBar({super.key, this.currentIndex = 0});
+  const CustomBottomBar({super.key, this.currentIndex = 0});
 
   @override
-  State<BottomBar> createState() => _BottomBar();
+  State<CustomBottomBar> createState() => _BottomBar();
 }
 
-class _BottomBar extends State<BottomBar> {
+class _BottomBar extends State<CustomBottomBar> {
   late int selectedPageIndex;
   @override
   void initState() {
@@ -20,12 +20,11 @@ class _BottomBar extends State<BottomBar> {
   Widget build(BuildContext context) {
     return BottomNavigationBar(
       currentIndex: selectedPageIndex,
-      selectedLabelStyle: const TextStyle(fontSize: 10),
-      unselectedLabelStyle: const TextStyle(fontSize: 10),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁'),
-        BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: '購物車'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: '個人資料'),
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: '首頁',),
+        BottomNavigationBarItem(icon: Icon(Icons.category), label: '分類'),
+        BottomNavigationBarItem(icon: Icon(Icons.history), label: '訂單紀錄'),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: '個人中心'),
       ],
       onTap: (index) {
         setState(() {
@@ -41,15 +40,20 @@ class _BottomBar extends State<BottomBar> {
           case 1:
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => OrderHistoryPage()),
+              MaterialPageRoute(builder: (context) => ClassificationPage()),
             );
             break;
           case 2:
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => AccountPage()),
+              MaterialPageRoute(builder: (context) => OrderHistoryPage()),
             );
             break;
+          case 3:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => AccountPage()),
+            );
         }
       },
     );

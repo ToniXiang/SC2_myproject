@@ -18,6 +18,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from django.core.cache import cache
+import random
+from django.contrib.auth.hashers import make_password
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -95,7 +98,64 @@ class OrderView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
-        
+class UserView(APIView):
+    """
+        傳出用戶名稱與郵件
+    """
+    def get(self,request):
+        try:
+            user = request.user
+            if user.is_authenticated:
+                data = {
+                    "username": user.username,
+                    "email": user.email
+                }
+                return Response(data, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+            else:
+                return Response({'error': '未登入'}, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
+        except Exception as e:
+            return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
+class SendVerificationCodeView(APIView):
+    """
+    發送重設密碼驗證碼到用戶 email
+    """
+    def post(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': '缺少 email'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+        # 生成 6 位數驗證碼
+        code = str(random.randint(100000, 999999))
+        cache.set(f'password_reset_{email}', code, timeout=300)  # 5 分鐘有效
+
+        # TODO: 用郵件發送驗證碼
+        print(f'驗證碼發送到 {email}: {code}')
+
+        return Response({'message': '驗證碼已發送'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+class ResetPasswordView(APIView):
+    """
+    使用驗證碼重設密碼
+    """
+    def post(self, request):
+        email = request.data.get('email')
+        code = request.data.get('code')
+        new_password = request.data.get('password')
+
+        if not all([email, code, new_password]):
+            return Response({'error': '缺少必要參數'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+        cached_code = cache.get(f'password_reset_{email}')
+        if cached_code != code:
+            return Response({'error': '驗證碼錯誤或已過期'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+
+        try:
+            user = User.objects.get(email=email)
+            user.password = make_password(new_password)
+            user.save()
+            cache.delete(f'password_reset_{email}')  # 刪除驗證碼
+            return Response({'message': '密碼重設成功'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+        except User.DoesNotExist:
+            return Response({'error': '用戶不存在'}, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)

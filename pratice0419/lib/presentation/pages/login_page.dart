@@ -144,7 +144,6 @@ class LoginPageState extends State<LoginPage>{
               child: const Text('註冊'),
             ),
             const SizedBox(height: 32),
-            const Text("登入需要數十秒的等待時間"),
             if(isLoading)
               CircularProgressIndicator(
                 backgroundColor: Colors.grey[200],

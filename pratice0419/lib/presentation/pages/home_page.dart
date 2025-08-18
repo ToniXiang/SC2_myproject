@@ -1,178 +1,164 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pratice0419/presentation/presentation.dart';
-import 'package:pratice0419/data/data.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
-  @override
-  HomePageState createState() => HomePageState();
-}
-
-class HomePageState extends State<HomePage> {
-  late Future<List<Map<String, dynamic>>> _productsFuture;
-  final storage = FlutterSecureStorage();
-  final Set<int> selectedProducts = {};
-  int selectedPageIndex = 0;
-  @override
-  void initState() {
-    super.initState();
-    _productsFuture = fetchProducts();
-  }
-
-  Future<List<Map<String, dynamic>>> fetchProducts() async {
-    try {
-      final data = await ApiService.getRequest('api/products/');
-      return data.map((product) {
-        return {
-          'name': product['name'],
-          'price': product['price'],
-          'quantity': product['quantity'] ?? 1,
-        };
-      }).toList();
-    } catch (e) {
-      throw Exception('伺服器內部錯誤');
-    }
-  }
-
-  void placeOrder() async {
-    if (selectedProducts.isEmpty) {
-      if (!mounted) return;
-      MessageService.showMessage(context, "未選取任何商品");
-      return;
-    }
-    final products = await _productsFuture;
-    final selectedItems =
-        selectedProducts.map((index) {
-          final product = products[index];
-          return {
-            'product_name': product['name'],
-            'product_price': product['price'],
-            'quantity': product['quantity'],
-          };
-        }).toList();
-    try {
-      final token = await storage.read(key: 'auth_token');
-      await ApiService.postRequest('api/orders/', {
-        'products': selectedItems,
-      }, token: token);
-      if (!mounted) return;
-      MessageService.showMessage(context, "訂單送出成功");
-    } catch (e) {
-      if (!mounted) return;
-      MessageService.showMessage(context, "訂單送出失敗");
-      return;
-    }
-    setState(() {
-      for (var index in selectedProducts) {
-        products[index]['quantity'] = 1;
-      }
-      selectedProducts.clear();
-    });
-  }
-
-  void pushOrder() async {
-    final products = await _productsFuture;
-    double total = 0;
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("訂單明細"),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children:
-                  selectedProducts.map((index) {
-                    final product = products[index];
-                    total +=
-                        double.parse(product['price']) * product['quantity'];
-                    return ListTile(
-                      title: Text(product['name']),
-                      subtitle: Text('數量: ${product['quantity']}'),
-                      trailing: Text(
-                        '\$${(double.parse(product['price']) * product['quantity']).toStringAsFixed(2)}',
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ),
-          actions: [
-            Text("總共\$${total.toStringAsFixed(2)}"),
-            Row(
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    placeOrder();
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("送出"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text("關閉"),
-                ),
-              ],
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void removeOrder() async {
-    final products = await _productsFuture;
-    setState(() {
-      for (var product in products) {
-        product['quantity'] = 1;
-      }
-      selectedProducts.clear();
-    });
-    if (!mounted) return;
-    MessageService.showMessage(context, "刷新當前訂單完畢");
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: HomeContent(
-        productsFuture: _productsFuture,
-        selectedProducts: selectedProducts,
-      ),
       drawer: const CustomDrawer(),
-      bottomNavigationBar: const BottomBar(currentIndex: 0),
-    );
-  }
-}
+      bottomNavigationBar: const CustomBottomBar(),
+      body: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          SizedBox(
+            height: 180,
+            child: PageView(
+              children: List.generate(
+                3,
+                (index) => Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey[200 * (index + 2)],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Banner ${index + 1}',
+                      style: const TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            decoration: InputDecoration(
+              hintText: '搜尋商品',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 0,
+                horizontal: 12,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 80,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(
+                5,
+                (index) => Container(
+                  width: 70,
+                  margin: const EdgeInsets.only(right: 12),
+                  child: Column(
+                    children: [
+                      CircleAvatar(radius: 25, child: Text('圖${index + 1}')),
+                      const SizedBox(height: 4),
+                      Text(
+                        '分類${index + 1}',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
-class DownOperations extends StatelessWidget {
-  final VoidCallback onPushOrder;
-  final VoidCallback onRemoveOrder;
+          const Text(
+            '限時秒殺',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 150,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(
+                5,
+                (index) => Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(right: 12),
+                  color: Colors.orange[200 * (index + 2)],
+                  child: Center(child: Text('特價商品${index + 1}')),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
-  const DownOperations({
-    super.key,
-    required this.onPushOrder,
-    required this.onRemoveOrder,
-  });
+          const Text(
+            '為你推薦',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 180,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(
+                5,
+                (index) => Container(
+                  width: 140,
+                  margin: const EdgeInsets.only(right: 12),
+                  color: Colors.green[200 * (index + 2)],
+                  child: Center(child: Text('推薦商品${index + 1}')),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
 
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        ElevatedButton(
-          onPressed: onPushOrder,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-          child: const Text("查看訂單明細", style: TextStyle(color: Colors.white)),
-        ),
-        ElevatedButton(
-          onPressed: onRemoveOrder,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-          child: const Text("清除訂單", style: TextStyle(color: Colors.white)),
-        ),
-      ],
+          const Text(
+            '品牌專區',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: List.generate(
+                5,
+                (index) => Container(
+                  width: 100,
+                  margin: const EdgeInsets.only(right: 12),
+                  color: Colors.purple[200 * (index + 2)],
+                  child: Center(child: Text('品牌${index + 1}')),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          const Text(
+            '用戶分享',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            children: List.generate(
+              3,
+              (index) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('用戶分享內容 ${index + 1}'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
