@@ -33,10 +33,10 @@ def register(request):
     password = request.data.get('password')
     
     if not username or not email or not password:
-        return Response({'error': '需要完整郵件、名稱與密碼'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+        return Response({'message': '需要完整郵件、名稱與密碼'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
     if User.objects.filter(email=email).exists():
-        return Response({'error': '此郵件已被註冊'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+        return Response({'message': '此郵件已被註冊'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
     user = User.objects.create_user(username=username, email=email, password=password)
     return Response({'message': '註冊成功',
@@ -46,15 +46,24 @@ class CustomAuthToken(ObtainAuthToken):
     """
     登入 API：使用電子郵件和密碼進行驗證。
     """
+    
+    
     def post(self, request):
         serializer = CustomAuthTokenSerializer(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return Response(
+                {'message': '電子郵件或密碼輸入錯誤'},
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type='application/json; charset=utf-8'
+            )
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         return Response({
+            'message':'登入成功',
             'token': token.key,
             'username': user.username,
-        },status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+        }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
+
 @permission_classes([AllowAny])
 class ProductListView(APIView):
     """
@@ -64,9 +73,23 @@ class ProductListView(APIView):
         try:
             products = Product.objects.all()
             serializer = ProductSerializer(products, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {
+                    "message": "商品列表取得成功",
+                    "data": serializer.data
+                },
+                status=status.HTTP_200_OK,
+                content_type='application/json; charset=utf-8'
+
+            )
         except Exception as e:
-            return Response({'error':'資料錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
+            return Response(
+                {
+                    "message": "伺服器發生錯誤，請稍後再試",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                content_type='application/json; charset=utf-8'
+            )
 class OrderView(APIView):
     """
     訂單 API：傳出訂單列表、傳入訂單。
@@ -86,18 +109,44 @@ class OrderView(APIView):
             return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
     def post(self, request):
         """
-        傳入訂單：創建屬於當前使用者的訂單。
+            傳入訂單：創建屬於當前使用者的訂單
         """
-        #print(f"Authenticated User: {request.user}")
-        #print(f"Request Data: {request.data}") 
+        if not request.data or not any(request.data.values()):
+            return Response(
+            {
+                "message": "訂單建立失敗，沒有任何輸入資料",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+            content_type='application/json; charset=utf-8'
+            )
         serializer = CreateOrderSerializer(data=request.data, context={'request': request})
         try:
             if serializer.is_valid():
                 order = serializer.save(user=request.user)
-                return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {
+                        "message": "訂單建立成功",
+                        "data": OrderSerializer(order).data
+                    },
+                    status=status.HTTP_201_CREATED,
+                    content_type='application/json; charset=utf-8'
+                )
+            return Response(
+                {
+                    "message": "訂單建立失敗，請確認輸入資料",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type='application/json; charset=utf-8'
+            )
         except Exception as e:
-            return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
+            return Response(
+            {
+                "message": "伺服器發生錯誤，請稍後再試",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content_type='application/json; charset=utf-8',
+        )
+
 class UserView(APIView):
     """
         傳出用戶名稱與郵件
@@ -112,9 +161,9 @@ class UserView(APIView):
                 }
                 return Response(data, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
             else:
-                return Response({'error': '未登入'}, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
+                return Response({'message': '使用者未登入'}, status=status.HTTP_401_UNAUTHORIZED, content_type='application/json; charset=utf-8')
         except Exception as e:
-            return Response({'error':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
+            return Response({'message':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
 class SendVerificationCodeView(APIView):
     """
     發送重設密碼驗證碼到用戶 email
@@ -122,7 +171,7 @@ class SendVerificationCodeView(APIView):
     def post(self, request):
         email = request.data.get('email')
         if not email:
-            return Response({'error': '缺少 email'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+            return Response({'message': '缺少 email'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         # 生成 6 位數驗證碼
         code = str(random.randint(100000, 999999))
@@ -142,11 +191,11 @@ class ResetPasswordView(APIView):
         new_password = request.data.get('password')
 
         if not all([email, code, new_password]):
-            return Response({'error': '缺少必要參數'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+            return Response({'message': '缺少必要參數'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         cached_code = cache.get(f'password_reset_{email}')
         if cached_code != code:
-            return Response({'error': '驗證碼錯誤或已過期'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+            return Response({'message': '驗證碼錯誤或已過期'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         try:
             user = User.objects.get(email=email)
@@ -155,7 +204,7 @@ class ResetPasswordView(APIView):
             cache.delete(f'password_reset_{email}')  # 刪除驗證碼
             return Response({'message': '密碼重設成功'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         except User.DoesNotExist:
-            return Response({'error': '用戶不存在'}, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
+            return Response({'message': '用戶不存在'}, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)

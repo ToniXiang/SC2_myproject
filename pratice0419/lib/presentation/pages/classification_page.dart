@@ -21,8 +21,10 @@ class ClassificationPageState extends State<ClassificationPage> {
 
   Future<List<Map<String, dynamic>>> fetchProducts() async {
     try {
-      final data = await ApiService.getRequest('api/products/');
-      return data.map<Map<String, dynamic>>((product) {
+      final responseData = await ApiService.getRequest('api/products/');
+      final List products = responseData['data'] ?? [];
+
+      return products.map<Map<String, dynamic>>((product) {
         return {
           'name': product['name'] ?? '未命名商品',
           'price': product['price'] ?? 0,
@@ -30,16 +32,11 @@ class ClassificationPageState extends State<ClassificationPage> {
         };
       }).toList();
     } catch (e) {
-      throw Exception('取得商品列表失敗: $e');
+      throw Exception('$e');
     }
   }
 
-  void placeOrder() async {
-    if (selectedProducts.isEmpty) {
-      if (!mounted) return;
-      MessageService.showMessage(context, "未選取任何商品");
-      return;
-    }
+  void pushOrder() async {
     final products = await _productsFuture;
     final selectedItems =
         selectedProducts.map((index) {
@@ -52,14 +49,15 @@ class ClassificationPageState extends State<ClassificationPage> {
         }).toList();
     try {
       final token = await storage.read(key: 'auth_token');
-      await ApiService.postRequest('api/orders/', {
+      if (token == null) return;
+      final responseData = await ApiService.postRequest('api/orders/', {
         'products': selectedItems,
       }, token: token);
       if (!mounted) return;
-      MessageService.showMessage(context, "訂單送出成功");
+      MessageService.showMessage(context, responseData['message']);
     } catch (e) {
       if (!mounted) return;
-      MessageService.showMessage(context, "訂單送出失敗");
+      MessageService.showMessage(context, '$e');
       return;
     }
     setState(() {
@@ -70,15 +68,24 @@ class ClassificationPageState extends State<ClassificationPage> {
     });
   }
 
-  void pushOrder() async {
+  void placeOrder() async {
     final products = await _productsFuture;
     double total = 0;
     if (!mounted) return;
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final theme = Theme.of(context);
         return AlertDialog(
-          title: const Text("訂單明細"),
+          title: Row(
+            children: [
+              const Icon(Icons.receipt_long, size: 24),
+              Text("訂單明細", style: theme.textTheme.titleLarge),
+            ],
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           content: SingleChildScrollView(
             child: ListBody(
               children:
@@ -102,9 +109,12 @@ class ClassificationPageState extends State<ClassificationPage> {
               children: [
                 ElevatedButton(
                   onPressed: () {
-                    placeOrder();
+                    pushOrder();
                     Navigator.of(context).pop();
                   },
+                  style: ElevatedButton.styleFrom(
+                    side: BorderSide(color: theme.colorScheme.primary),
+                  ),
                   child: const Text("送出"),
                 ),
                 TextButton(
@@ -148,7 +158,7 @@ class ClassificationPageState extends State<ClassificationPage> {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: DownOperations(
-              onPushOrder: pushOrder,
+              onPlaceOrder: placeOrder,
               onRemoveOrder: removeOrder,
             ),
           ),
@@ -161,12 +171,12 @@ class ClassificationPageState extends State<ClassificationPage> {
 }
 
 class DownOperations extends StatelessWidget {
-  final VoidCallback onPushOrder;
+  final VoidCallback onPlaceOrder;
   final VoidCallback onRemoveOrder;
 
   const DownOperations({
     super.key,
-    required this.onPushOrder,
+    required this.onPlaceOrder,
     required this.onRemoveOrder,
   });
 
@@ -176,7 +186,7 @@ class DownOperations extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElevatedButton(
-          onPressed: onPushOrder,
+          onPressed: onPlaceOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
           child: const Text("查看訂單明細", style: TextStyle(color: Colors.white)),
         ),

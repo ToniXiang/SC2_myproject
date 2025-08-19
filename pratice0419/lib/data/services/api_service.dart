@@ -10,56 +10,43 @@ class ApiService {
     String? token,
   }) async {
     final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Token $token',
-        },
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
-      } else {
-        throw Exception(
-          'HTTP POST request failed. Status code: ${response.statusCode}, Response: ${response.body}',
-        );
-      }
-    } catch (e) {
-      throw Exception('HTTP POST request encountered an error: $e');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Token $token',
+      },
+      body: jsonEncode(body),
+    );
+    final responseData = jsonDecode(response.body);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return responseData;
+    } else {
+      throw Exception('${responseData['message']}');
     }
   }
 
   /// Sends a GET request to the specified endpoint.
   static Future<dynamic> getRequest(String endpoint, {String? token}) async {
     final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');
-    try {
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Token $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          return decoded;
-        } else if (decoded is List) {
-          return decoded;
-        } else {
-          throw Exception('API 回傳格式非 Map 或 List');
-        }
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Token $token',
+      },
+    );
+    final responseData = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      if (responseData is Map<String, dynamic>) {
+        return responseData;
+      } else if (responseData is List) {
+        return responseData;
       } else {
-        throw Exception(
-          'HTTP GET request failed. Status code: ${response.statusCode}, Response: ${response.body}',
-        );
+        throw Exception('API 回傳格式非 Map 或 List');
       }
-    } catch (e) {
-      throw Exception('HTTP GET request encountered an error: $e');
+    } else {
+      throw Exception('${responseData['message']}');
     }
   }
 }

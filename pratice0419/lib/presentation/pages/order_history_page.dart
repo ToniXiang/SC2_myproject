@@ -31,6 +31,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: const CustomAppBar(),
       body: FutureBuilder<List<dynamic>>(
@@ -68,10 +69,11 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 elevation: 2,
                 child: ExpansionTile(
                   leading: const Icon(Icons.receipt_long),
+                  collapsedBackgroundColor: theme.colorScheme.surface,
+                  backgroundColor: theme.colorScheme.surface,
                   title: Text("訂單 #$orderId"),
                   subtitle: Text(
                     "建立於 ${createdAt.toLocal()}".split(".")[0],
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                   children: [
                     Column(

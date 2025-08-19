@@ -21,10 +21,6 @@ class SettingsPageState extends State<SettingsPage> {
   String email = 'user@example.com';
   String? token;
 
-  void sendFeedback() {
-    MessageService.showMessage(context, "尚未完成的功能");
-  }
-
   Future<void> getVerificationCode() async {
     try {
       final response = await ApiService.postRequest(
@@ -32,9 +28,10 @@ class SettingsPageState extends State<SettingsPage> {
         {'email': email},
         token: token,
       );
-      MessageService.showMessage(context, response['message'] ?? '已發送驗證碼');
+      if (!mounted) return;
+      MessageService.showMessage(context, response['message']);
     } catch (e) {
-      MessageService.showMessage(context, '發送驗證碼失敗: $e');
+      MessageService.showMessage(context, '$e');
     }
   }
 
@@ -47,16 +44,16 @@ class SettingsPageState extends State<SettingsPage> {
       MessageService.showMessage(context, '密碼與確認密碼不一致');
       return;
     }
-
     try {
-      final response = await ApiService.postRequest('api/reset_password/', {
+      final responseData = await ApiService.postRequest('api/reset_password/', {
         'email': email,
         'password': newPassword,
         'code': code,
       }, token: token);
-      MessageService.showMessage(context, response['message'] ?? '密碼已更新');
+      if (!mounted) return;
+      MessageService.showMessage(context, responseData['message']);
     } catch (e) {
-      MessageService.showMessage(context, '重設密碼失敗: $e');
+      MessageService.showMessage(context, '$e');
     }
   }
 
@@ -70,25 +67,28 @@ class SettingsPageState extends State<SettingsPage> {
     try {
       token = await storage.read(key: 'auth_token');
       if (token == null) return;
-      final data = await ApiService.getRequest('api/user/info', token: token);
+      final responseData = await ApiService.getRequest('api/user/info', token: token);
       setState(() {
-        username = data['username'] ?? 'user';
-        email = data['email'] ?? 'user@example.com';
+        username = responseData['username'] ?? 'user';
+        email = responseData['email'] ?? 'user@example.com';
       });
+      if(!mounted) return;
     } catch (e) {
-      debugPrint('取得使用者資訊失敗');
+      MessageService.showMessage(context, '$e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     String themeName = Provider.of<ThemeProvider>(context).getThemeName();
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
+            color: theme.colorScheme.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -109,21 +109,20 @@ class SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 8),
                   Text(email, style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 8),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: '新密碼',
-                      hintText: '輸入密碼',
-                    ),
+                  _buildInputDecoration(
+                    context: context,
+                    labelText: '新密碼',
+                    hintText: '輸入新密碼',
+                    icon: Icon(Icons.lock_outline),
                     controller: passwordController,
-                    obscureText: true,
                   ),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: '確認密碼',
-                      hintText: '再次輸入',
-                    ),
+                  const SizedBox(height: 8),
+                  _buildInputDecoration(
+                    context: context,
+                    labelText: '確認密碼',
+                    hintText: '再次輸入',
+                    icon: Icon(Icons.lock_outline),
                     controller: verificationPasswordController,
-                    obscureText: true,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -131,15 +130,18 @@ class SettingsPageState extends State<SettingsPage> {
                     children: [
                       TextButton(
                         onPressed: getVerificationCode,
+                        style: ElevatedButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.primary),
+                        ),
                         child: const Text("獲取驗證碼"),
                       ),
                     ],
                   ),
-                  TextField(
-                    decoration: const InputDecoration(
-                      labelText: '驗證碼',
-                      hintText: '輸入驗證碼',
-                    ),
+                  _buildInputDecoration(
+                    context: context,
+                    labelText: '驗證碼',
+                    hintText: '輸入驗證碼',
+                    icon: Icon(Icons.lock_outline),
                     controller: verificationCodeController,
                   ),
                   const SizedBox(height: 12),
@@ -147,6 +149,9 @@ class SettingsPageState extends State<SettingsPage> {
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
                       onPressed: changePassword,
+                      style: ElevatedButton.styleFrom(
+                        side: BorderSide(color: theme.colorScheme.primary),
+                      ),
                       child: const Text("更改密碼"),
                     ),
                   ),
@@ -157,6 +162,7 @@ class SettingsPageState extends State<SettingsPage> {
 
           const SizedBox(height: 16),
           Card(
+            color: theme.colorScheme.surface,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -216,6 +222,7 @@ class SettingsPageState extends State<SettingsPage> {
 
           const SizedBox(height: 16),
           Card(
+            color: theme.colorScheme.surface,
             child: Column(
               children: [
                 ListTile(
@@ -243,6 +250,29 @@ class SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInputDecoration({
+    required BuildContext context,
+    required String labelText,
+    required String hintText,
+    required Icon icon,
+    required TextEditingController controller,
+  }) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: labelText,
+        hintText: hintText,
+        filled: true,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        prefixIcon: icon,
+      ),
+      controller: controller,
+      obscureText: true,
     );
   }
 }
