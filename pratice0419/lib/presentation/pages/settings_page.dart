@@ -109,7 +109,7 @@ class SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 8),
                   Text(email, style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 8),
-                  _buildInputDecoration(
+                  _PasswordInput(
                     context: context,
                     labelText: '新密碼',
                     hintText: '輸入新密碼',
@@ -117,7 +117,7 @@ class SettingsPageState extends State<SettingsPage> {
                     controller: passwordController,
                   ),
                   const SizedBox(height: 8),
-                  _buildInputDecoration(
+                  _PasswordInput(
                     context: context,
                     labelText: '確認密碼',
                     hintText: '再次輸入',
@@ -137,7 +137,8 @@ class SettingsPageState extends State<SettingsPage> {
                       ),
                     ],
                   ),
-                  _buildInputDecoration(
+                  const SizedBox(height: 12),
+                  _PasswordInput(
                     context: context,
                     labelText: '驗證碼',
                     hintText: '輸入驗證碼',
@@ -252,27 +253,57 @@ class SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+class _PasswordInput extends StatefulWidget {
+  final BuildContext context;
+  final String labelText;
+  final String hintText;
+  final Icon icon;
+  final TextEditingController controller;
 
-  Widget _buildInputDecoration({
-    required BuildContext context,
-    required String labelText,
-    required String hintText,
-    required Icon icon,
-    required TextEditingController controller,
-  }) {
+  const _PasswordInput({
+    required this.context,
+    required this.labelText,
+    required this.hintText,
+    required this.icon,
+    required this.controller,
+  });
+
+  @override
+  State<_PasswordInput> createState() => _PasswordInputState();
+}
+
+class _PasswordInputState extends State<_PasswordInput> {
+  bool _obscureText = true;
+
+  void _toggleVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return TextField(
+      controller: widget.controller,
+      obscureText: _obscureText,
       decoration: InputDecoration(
-        labelText: labelText,
-        hintText: hintText,
+        labelText: widget.labelText,
+        hintText: widget.hintText,
         filled: true,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
-        prefixIcon: icon,
+        prefixIcon: widget.icon,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+          ),
+          onPressed: _toggleVisibility,
+        ),
       ),
-      controller: controller,
-      obscureText: true,
     );
   }
 }
+

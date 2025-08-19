@@ -205,6 +205,25 @@ class ResetPasswordView(APIView):
             return Response({'message': '密碼重設成功'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         except User.DoesNotExist:
             return Response({'message': '用戶不存在'}, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
+class CancelOrderView(APIView):
+       """
+       訂單 id 移除定單
+       """
+       def post(self, request, order_id):
+            try:
+                order = Order.objects.get(id=order_id)
+                order.delete()
+                return Response(
+                    {'message': '訂單移除成功'},
+                    status=status.HTTP_200_OK,
+                    content_type='application/json; charset=utf-8'
+                )
+            except Order.DoesNotExist:
+                return Response(
+                    {'message': '訂單不存在'},
+                    status=status.HTTP_404_NOT_FOUND,
+                    content_type='application/json; charset=utf-8'
+                )
 def home(request):
     """Renders the home page."""
     assert isinstance(request, HttpRequest)

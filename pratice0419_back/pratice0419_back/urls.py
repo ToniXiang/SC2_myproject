@@ -6,7 +6,7 @@ from django.urls import path
 from django.contrib import admin
 from django.contrib.auth.views import LoginView, LogoutView
 from app import forms, views
-from app.views import CustomAuthToken,ProductListView,OrderView,register,UserView,SendVerificationCodeView,ResetPasswordView
+from app.views import CustomAuthToken,ProductListView,OrderView,register,UserView,SendVerificationCodeView,ResetPasswordView,CancelOrderView
 
 urlpatterns = [
     path('api/orders/', OrderView.as_view(), name='order-view'),
@@ -16,6 +16,7 @@ urlpatterns = [
     path('api/products/', ProductListView.as_view(), name='product-list'),
     path('api/send_verification_code/',SendVerificationCodeView.as_view(),name='send_verification_code'),
     path('api/reset_password/',ResetPasswordView.as_view(),name='reset_password'),
+     path('api/orders/<int:order_id>/cancel/', CancelOrderView.as_view(), name='cancel-order'),
     path('', views.home, name='home'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),

@@ -22,10 +22,74 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   Future<List<dynamic>> fetchOrders() async {
     try {
       final token = await storage.read(key: 'auth_token');
+      if (token == null) {
+        throw Exception('未登入或授權失敗');
+      }
       final data = await ApiService.getRequest('api/orders/', token: token);
       return data;
     } catch (e) {
       throw Exception('取得訂單失敗');
+    }
+  }
+  void showLogoutDialog(BuildContext context,int orderId) {
+  showDialog(
+    context: context,
+    builder:
+        (context) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.receipt_long, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(width: 8),
+              Text('訂單', style: Theme.of(context).textTheme.titleMedium),
+            ],
+          ),
+          content: Text('確定要取消 #$orderId 訂單嗎?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _cancelOrder(orderId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('確定'),
+            ),
+          ],
+        ),
+  );
+}
+
+  void _cancelOrder(int orderId) async {
+    try {
+      final token = await storage.read(key: 'auth_token');
+      if (token == null) {
+        throw Exception('未登入或授權失敗');
+      }
+      final responseData = await ApiService.postRequest(
+        'api/orders/$orderId/cancel/',
+        {},
+        token: token,
+      );
+      setState(() {
+        _ordersFuture = fetchOrders();
+      });
+      if (!mounted) return;
+      MessageService.showMessage(context, responseData['message']);
+    } catch (e) {
+      if (!mounted) return;
+      MessageService.showMessage(context, '$e');
     }
   }
 
@@ -72,32 +136,44 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   collapsedBackgroundColor: theme.colorScheme.surface,
                   backgroundColor: theme.colorScheme.surface,
                   title: Text("訂單 #$orderId"),
-                  subtitle: Text(
-                    "建立於 ${createdAt.toLocal()}".split(".")[0],
-                  ),
+                  subtitle: Text("建立於 ${createdAt.toLocal()}".split(".")[0]),
                   children: [
                     Column(
-                      children: items.map((item) {
-                        return ListTile(
-                          title: Text(item['product_name']),
-                          subtitle: Text("數量: ${item['quantity']}"),
-                          trailing: Text(
-                            "\$${(double.parse(item['product_price']) * item['quantity']).toStringAsFixed(2)}",
-                          ),
-                        );
-                      }).toList(),
+                      children:
+                          items.map((item) {
+                            return ListTile(
+                              title: Text(item['product_name']),
+                              subtitle: Text("數量: ${item['quantity']}"),
+                              trailing: Text(
+                                "\$${(double.parse(item['product_price']) * item['quantity']).toStringAsFixed(2)}",
+                              ),
+                            );
+                          }).toList(),
                     ),
                     const Divider(),
                     Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("總計: \$${total.toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              )),
+                          ElevatedButton(
+                            onPressed: () {
+                              showLogoutDialog(context, orderId);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              side: BorderSide(
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                            child: const Text("取消訂單"),
+                          ),
+                          Text(
+                            "總計: \$${total.toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
                         ],
                       ),
                     ),
