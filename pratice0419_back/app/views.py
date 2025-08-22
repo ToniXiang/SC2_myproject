@@ -2,9 +2,6 @@
 Definition of views.
 """
 
-from datetime import datetime
-from django.shortcuts import render
-from django.http import HttpRequest
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -224,40 +221,3 @@ class CancelOrderView(APIView):
                     status=status.HTTP_404_NOT_FOUND,
                     content_type='application/json; charset=utf-8'
                 )
-def home(request):
-    """Renders the home page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/index.html',
-        {
-            'title':'Home Page',
-            'year':datetime.now().year,
-        }
-    )
-
-def contact(request):
-    """Renders the contact page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/contact.html',
-        {
-            'title':'Contact',
-            'message':'Your contact page.',
-            'year':datetime.now().year,
-        }
-    )
-
-def about(request):
-    """Renders the about page."""
-    assert isinstance(request, HttpRequest)
-    return render(
-        request,
-        'app/about.html',
-        {
-            'title':'About',
-            'message':'Your application description page.',
-            'year':datetime.now().year,
-        }
-    )

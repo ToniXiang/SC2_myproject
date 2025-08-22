@@ -1,0 +1,11 @@
+﻿{% extends "app/layout.html" %}
+
+{% block content %}
+
+<address>
+    <h1>聯絡我們</h1>
+    <p>如果您有任何問題或建議，請隨時與我們聯繫。</p>
+    <p>Email: <a>s1411232069@ad1.nutc.edu.tw</a></p>
+</address>
+
+{% endblock %}
