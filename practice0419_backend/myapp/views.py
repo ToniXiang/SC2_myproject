@@ -9,8 +9,6 @@ from django.core.cache import cache
 
 # Django REST Framework imports
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response

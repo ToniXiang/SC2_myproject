@@ -188,7 +188,7 @@ class DownOperations extends StatelessWidget {
         ElevatedButton(
           onPressed: onPlaceOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-          child: const Text("查看訂單明細", style: TextStyle(color: Colors.white)),
+          child: const Text("提交訂單", style: TextStyle(color: Colors.white)),
         ),
         ElevatedButton(
           onPressed: onRemoveOrder,

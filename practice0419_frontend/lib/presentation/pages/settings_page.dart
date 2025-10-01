@@ -42,11 +42,10 @@ class SettingsPageState extends State<SettingsPage> {
       return;
     }
     try {
-      final responseData = await ApiService.authenticatedPostRequest('api/reset_password/', {
-        'email': email,
-        'password': newPassword,
-        'code': code,
-      });
+      final responseData = await ApiService.authenticatedPostRequest(
+        'api/reset_password/',
+        {'email': email, 'password': newPassword, 'code': code},
+      );
       if (!mounted) return;
       MessageService.showMessage(context, responseData['message']);
       // 清空密碼輸入框
@@ -84,13 +83,13 @@ class SettingsPageState extends State<SettingsPage> {
       setState(() {
         isLoading = true;
       });
-      
+
       final success = await AuthService.refreshToken();
-      
+
       setState(() {
         isLoading = false;
       });
-      
+
       if (mounted) {
         if (success) {
           MessageService.showMessage(context, 'Token 刷新成功');
@@ -108,47 +107,8 @@ class SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _logout() async {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('確認登出'),
-          content: const Text('您確定要登出嗎？'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('取消'),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _performLogout();
-              },
-              child: const Text('登出'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _performLogout() async {
-    try {
-      await AuthService.logout();
-      if (mounted) {
-        MessageService.showMessage(context, '已成功登出');
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        MessageService.showMessage(context, '登出失敗: $e');
-      }
-    }
+  void _logout() {
+    MessageService.showLogoutDialog(context);
   }
 
   @override
@@ -161,14 +121,14 @@ class SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     String themeName = Provider.of<ThemeProvider>(context).getThemeName();
     final theme = Theme.of(context);
-    
+
     if (isLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text('設定')),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    
+
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: ListView(
@@ -225,8 +185,8 @@ class SettingsPageState extends State<SettingsPage> {
                       icon: const Icon(Icons.refresh),
                       label: const Text('手動刷新 Token'),
                       style: TextButton.styleFrom(
-                          side: BorderSide(color: theme.colorScheme.primary),
-                        ),
+                        side: BorderSide(color: theme.colorScheme.primary),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -300,8 +260,8 @@ class SettingsPageState extends State<SettingsPage> {
                     child: TextButton(
                       onPressed: changePassword,
                       style: TextButton.styleFrom(
-                          side: BorderSide(color: theme.colorScheme.primary),
-                        ),
+                        side: BorderSide(color: theme.colorScheme.primary),
+                      ),
                       child: const Text("更改密碼"),
                     ),
                   ),
@@ -375,25 +335,28 @@ class SettingsPageState extends State<SettingsPage> {
             color: theme.colorScheme.surface,
             child: Column(
               children: [
-                ListTile(
-                  leading: const Icon(Icons.info_outline),
-                  title: const Text('GitHub 儲存庫'),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () async {
-                    const url =
-                        'https://github.com/ChenGuoXiang940/SC2_myproject';
-                    final Uri uri = Uri.parse(url);
-                    if (await canLaunchUrl(uri) && context.mounted) {
-                      await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    } else {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(const SnackBar(content: Text("不能開啟網址")));
-                    }
-                  },
+                Tooltip(
+                  message: '可確認版本更新狀況',
+                  child: ListTile(
+                    leading: const Icon(Icons.info_outline),
+                    title: const Text('GitHub 儲存庫'),
+                    trailing: const Icon(Icons.open_in_new),
+                    onTap: () async {
+                      const url =
+                          'https://github.com/ChenGuoXiang940/SC2_myproject';
+                      final Uri uri = Uri.parse(url);
+                      if (await canLaunchUrl(uri) && context.mounted) {
+                        await launchUrl(
+                          uri,
+                          mode: LaunchMode.externalApplication,
+                        );
+                      } else {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(const SnackBar(content: Text("不能開啟網址")));
+                      }
+                    },
+                  ),
                 ),
               ],
             ),
@@ -423,8 +386,8 @@ class SettingsPageState extends State<SettingsPage> {
                       icon: const Icon(Icons.logout),
                       label: const Text('登出'),
                       style: TextButton.styleFrom(
-                          side: BorderSide(color: theme.colorScheme.error),
-                        ),
+                        side: BorderSide(color: theme.colorScheme.error),
+                      ),
                     ),
                   ),
                 ],
@@ -449,14 +412,13 @@ class SettingsPageState extends State<SettingsPage> {
               style: const TextStyle(fontWeight: FontWeight.w500),
             ),
           ),
-          Expanded(
-            child: Text(value),
-          ),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
 }
+
 class _PasswordInput extends StatefulWidget {
   final BuildContext context;
   final String labelText;
@@ -500,13 +462,10 @@ class _PasswordInputState extends State<_PasswordInput> {
         ),
         prefixIcon: widget.icon,
         suffixIcon: IconButton(
-          icon: Icon(
-            _obscureText ? Icons.visibility_off : Icons.visibility,
-          ),
+          icon: Icon(_obscureText ? Icons.visibility_off : Icons.visibility),
           onPressed: _toggleVisibility,
         ),
       ),
     );
   }
 }
-
