@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../core/constants/app_constants.dart';
+import 'auth_service.dart';
 
 class ApiService {
   /// Sends a POST request to the specified endpoint with the given body.
@@ -14,7 +15,7 @@ class ApiService {
       url,
       headers: {
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Token $token',
+        if (token != null) 'Authorization': 'Bearer $token',
       },
       body: jsonEncode(body),
     );
@@ -33,7 +34,7 @@ class ApiService {
       url,
       headers: {
         'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Token $token',
+        if (token != null) 'Authorization': 'Bearer $token',
       },
     );
     final responseData = jsonDecode(response.body);
@@ -48,5 +49,18 @@ class ApiService {
     } else {
       throw Exception('${responseData['message']}');
     }
+  }
+
+  /// 帶有自動身份驗證的 GET 請求
+  static Future<dynamic> authenticatedGetRequest(String endpoint) async {
+    return await AuthService.authenticatedRequest('GET', endpoint);
+  }
+
+  /// 帶有自動身份驗證的 POST 請求
+  static Future<Map<String, dynamic>> authenticatedPostRequest(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    return await AuthService.authenticatedRequest('POST', endpoint, body: body);
   }
 }

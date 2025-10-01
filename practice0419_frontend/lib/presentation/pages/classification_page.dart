@@ -48,11 +48,11 @@ class ClassificationPageState extends State<ClassificationPage> {
           };
         }).toList();
     try {
-      final token = await storage.read(key: 'auth_token');
-      if (token == null) return;
+      final currentToken = await AuthService.getAccessToken();
+      if (currentToken == null) return;
       final responseData = await ApiService.postRequest('api/orders/', {
         'products': selectedItems,
-      }, token: token);
+      }, token: currentToken);
       if (!mounted) return;
       MessageService.showMessage(context, responseData['message']);
     } catch (e) {

@@ -1,5 +1,5 @@
 import 'package:practice0419_frontend/presentation/presentation.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:practice0419_frontend/data/data.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
@@ -105,8 +105,7 @@ class CustomDrawer extends StatelessWidget {
   }
 }
 void removeToken() async {
-  const storage = FlutterSecureStorage();
-  await storage.delete(key: 'auth_token');
+  await AuthService.logout();
 }
 void showLogoutDialog(BuildContext context) {
   showDialog(

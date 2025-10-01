@@ -7,6 +7,7 @@ export 'package:practice0419_frontend/presentation/pages/order_history_page.dart
 export 'package:practice0419_frontend/presentation/pages/shopping_cart_page.dart';
 export 'package:practice0419_frontend/presentation/pages/account_page.dart';
 export 'package:practice0419_frontend/presentation/pages/helper_page.dart';
+export 'package:practice0419_frontend/presentation/pages/splash_screen.dart';
 export 'package:practice0419_frontend/presentation/pages/common/drawer.dart';
 export 'package:practice0419_frontend/presentation/pages/common/app_bar.dart';
 export 'package:practice0419_frontend/presentation/pages/common/bottom_bar.dart';

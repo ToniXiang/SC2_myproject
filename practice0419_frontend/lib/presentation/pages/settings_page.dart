@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:practice0419_frontend/data/data.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:practice0419_frontend/core/core.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -16,22 +14,21 @@ class SettingsPageState extends State<SettingsPage> {
   final passwordController = TextEditingController();
   final verificationPasswordController = TextEditingController();
   final verificationCodeController = TextEditingController();
-  final storage = FlutterSecureStorage();
+  Map<String, dynamic>? userInfo;
+  bool isLoading = true;
   String username = 'user';
   String email = 'user@example.com';
-  String? token;
 
   Future<void> getVerificationCode() async {
     try {
-      final response = await ApiService.postRequest(
+      final response = await ApiService.authenticatedPostRequest(
         'api/send_verification_code/',
         {'email': email},
-        token: token,
       );
       if (!mounted) return;
       MessageService.showMessage(context, response['message']);
     } catch (e) {
-      MessageService.showMessage(context, '$e');
+      MessageService.showMessage(context, '發送驗證碼失敗: $e');
     }
   }
 
@@ -45,48 +42,139 @@ class SettingsPageState extends State<SettingsPage> {
       return;
     }
     try {
-      final responseData = await ApiService.postRequest('api/reset_password/', {
+      final responseData = await ApiService.authenticatedPostRequest('api/reset_password/', {
         'email': email,
         'password': newPassword,
         'code': code,
-      }, token: token);
+      });
       if (!mounted) return;
       MessageService.showMessage(context, responseData['message']);
+      // 清空密碼輸入框
+      passwordController.clear();
+      verificationPasswordController.clear();
+      verificationCodeController.clear();
     } catch (e) {
-      MessageService.showMessage(context, '$e');
+      MessageService.showMessage(context, '修改密碼失敗: $e');
+    }
+  }
+
+  Future<void> _loadUserInfo() async {
+    try {
+      final info = await AuthService.getUserInfo();
+      setState(() {
+        userInfo = info;
+        if (info != null) {
+          username = info['username'] ?? 'user';
+          email = info['email'] ?? 'user@example.com';
+        }
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        MessageService.showMessage(context, '載入用戶資料失敗: $e');
+      }
+    }
+  }
+
+  Future<void> _refreshToken() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      
+      final success = await AuthService.refreshToken();
+      
+      setState(() {
+        isLoading = false;
+      });
+      
+      if (mounted) {
+        if (success) {
+          MessageService.showMessage(context, 'Token 刷新成功');
+        } else {
+          MessageService.showMessage(context, 'Token 刷新失敗');
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        MessageService.showMessage(context, 'Token 刷新錯誤: $e');
+      }
+    }
+  }
+
+  Future<void> _logout() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('確認登出'),
+          content: const Text('您確定要登出嗎？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('取消'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _performLogout();
+              },
+              child: const Text('登出'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _performLogout() async {
+    try {
+      await AuthService.logout();
+      if (mounted) {
+        MessageService.showMessage(context, '已成功登出');
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        MessageService.showMessage(context, '登出失敗: $e');
+      }
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _fetchUserInfo();
-  }
-
-  Future<void> _fetchUserInfo() async {
-    try {
-      token = await storage.read(key: 'auth_token');
-      if (token == null) return;
-      final responseData = await ApiService.getRequest('api/user/info', token: token);
-      setState(() {
-        username = responseData['username'] ?? 'user';
-        email = responseData['email'] ?? 'user@example.com';
-      });
-      if(!mounted) return;
-    } catch (e) {
-      MessageService.showMessage(context, '$e');
-    }
+    _loadUserInfo();
   }
 
   @override
   Widget build(BuildContext context) {
     String themeName = Provider.of<ThemeProvider>(context).getThemeName();
     final theme = Theme.of(context);
+    
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('設定')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(title: const Text('設定')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // 用戶資訊卡片
           Card(
             color: theme.colorScheme.surface,
             child: Padding(
@@ -94,21 +182,82 @@ class SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const ListTile(
-                    leading: Icon(Icons.person),
-                    title: Text(
-                      '帳號',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Text(
+                    '用戶資訊',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (userInfo != null) ...[
+                    _buildInfoRow('用戶名稱', userInfo!['username'] ?? '未知'),
+                    _buildInfoRow('電子郵件', userInfo!['email'] ?? '未知'),
+                    if (userInfo!.containsKey('user_id'))
+                      _buildInfoRow('用戶 ID', userInfo!['user_id'].toString()),
+                  ] else
+                    const Text('無法載入用戶資訊'),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Token 管理區域
+          Card(
+            color: theme.colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Token 管理',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _refreshToken,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('手動刷新 Token'),
+                      style: TextButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.primary),
+                        ),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(username, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 8),
-                  Text(email, style: const TextStyle(fontSize: 16)),
-                  const SizedBox(height: 8),
+                  Text(
+                    '系統會自動刷新 access token，但您也可以手動刷新',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: .6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 密碼修改區域
+          Card(
+            color: theme.colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '密碼管理',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _PasswordInput(
                     context: context,
                     labelText: '新密碼',
@@ -116,7 +265,7 @@ class SettingsPageState extends State<SettingsPage> {
                     icon: Icon(Icons.lock_outline),
                     controller: passwordController,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   _PasswordInput(
                     context: context,
                     labelText: '確認密碼',
@@ -142,17 +291,17 @@ class SettingsPageState extends State<SettingsPage> {
                     context: context,
                     labelText: '驗證碼',
                     hintText: '輸入驗證碼',
-                    icon: Icon(Icons.lock_outline),
+                    icon: Icon(Icons.verified_user_outlined),
                     controller: verificationCodeController,
                   ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
                       onPressed: changePassword,
-                      style: ElevatedButton.styleFrom(
-                        side: BorderSide(color: theme.colorScheme.primary),
-                      ),
+                      style: TextButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.primary),
+                        ),
                       child: const Text("更改密碼"),
                     ),
                   ),
@@ -248,6 +397,60 @@ class SettingsPageState extends State<SettingsPage> {
                 ),
               ],
             ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 登出按鈕
+          Card(
+            color: theme.colorScheme.surface,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '帳戶操作',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton.icon(
+                      onPressed: _logout,
+                      icon: const Icon(Icons.logout),
+                      label: const Text('登出'),
+                      style: TextButton.styleFrom(
+                          side: BorderSide(color: theme.colorScheme.error),
+                        ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
           ),
         ],
       ),

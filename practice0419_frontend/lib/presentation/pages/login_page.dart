@@ -24,20 +24,47 @@ class _LoginPageState extends State<LoginPage> {
         'email': emailController.text,
         'password': passwordController.text,
       });
-      if (responseData.containsKey('token') &&
-          responseData.containsKey('username')) {
-        String token = responseData['token'] ?? "未知Token";
+      
+      // 檢查返回的 token 和用戶信息
+      if (responseData.containsKey('access_token') && 
+          responseData.containsKey('refresh_token')) {
+        
+        String accessToken = responseData['access_token'] ?? "";
+        String refreshToken = responseData['refresh_token'] ?? "";
         String username = responseData['username'] ?? "未知使用者";
-        await saveToken(token);
+        
+        // 準備用戶信息
+        Map<String, dynamic> userInfo = {
+          'username': username,
+          'email': emailController.text,
+          if (responseData.containsKey('user_id')) 'user_id': responseData['user_id'],
+        };
+        
+        // 使用 AuthService 保存身份驗證資料
+        await AuthService.saveAuthData(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          userInfo: userInfo,
+          expiresIn: responseData['expires_in'] ?? 3600, // 預設 1 小時
+        );
+        
+        // 驗證 token 是否有效
+        final isValid = await AuthService.validateToken();
+        if (!isValid) {
+          throw Exception('Token 驗證失敗');
+        }
+        
         if (mounted) {
           MessageService.showMessage(
             context,
             responseData['message'] + "  歡迎：$username",
           );
         }
+        
         setState(() {
           isLoading = false;
         });
+        
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -51,12 +78,12 @@ class _LoginPageState extends State<LoginPage> {
           isLoading = false;
         });
         if (mounted) {
-          MessageService.showMessage(context, "登入失敗");
+          MessageService.showMessage(context, "登入失敗：缺少必要的身份驗證資料");
         }
       }
     } catch (e) {
       if (mounted) {
-        MessageService.showMessage(context, '$e');
+        MessageService.showMessage(context, '登入錯誤: $e');
       }
       setState(() {
         isLoading = false;
@@ -97,10 +124,6 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       isLoading = false;
     }
-  }
-
-  Future<void> saveToken(String token) async {
-    await storage.write(key: 'auth_token', value: token);
   }
 
   Widget buildTextField({

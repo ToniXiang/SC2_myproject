@@ -43,7 +43,7 @@ class MainApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode: themeProvider.currentThemeMode,
           onGenerateRoute: (RouteSettings settings) {
-            return MaterialPageRoute(builder: (context) => const LoginPage());
+            return MaterialPageRoute(builder: (context) => const SplashScreen());
           },
         );
       },

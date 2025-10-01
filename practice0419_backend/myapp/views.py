@@ -16,6 +16,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+# JWT imports
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 # Local imports
 from .models import Product, Order
 from .serializers import ProductSerializer, OrderSerializer, CreateOrderSerializer, CustomAuthTokenSerializer
@@ -59,10 +63,14 @@ class CustomAuthToken(ObtainAuthToken):
         # At this point, we know validation passed and user exists
         validated_data = cast(Dict[str, Any], serializer.validated_data)
         user = validated_data['user']
-        token, created = Token.objects.get_or_create(user=user)
+        # Create JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+        
         return Response({
             'message':'登入成功',
-            'token': token.key,
+            'access_token': str(access_token),
+            'refresh_token': str(refresh),
             'username': user.username,
         }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
@@ -96,7 +104,7 @@ class OrderView(APIView):
     """
         訂單 API：傳出訂單列表、傳入訂單。
     """
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request):
         try:
@@ -142,11 +150,26 @@ class OrderView(APIView):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content_type='application/json; charset=utf-8',
         )
+    def delete(self, request, order_id):
+        try:
+            order = Order.objects.get(id=order_id)
+            order.delete()
+            return Response(
+                {'message': '訂單移除成功'},
+                status=status.HTTP_200_OK,
+                content_type='application/json; charset=utf-8'
+            )
+        except Order.DoesNotExist:
+            return Response(
+                {'message': '訂單不存在'},
+                status=status.HTTP_404_NOT_FOUND,
+                content_type='application/json; charset=utf-8'
+            )
 class UserView(APIView):
     """
         使用者 API：傳出用戶名稱與郵件
     """
-    authentication_classes = [TokenAuthentication]
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self,request):
         try:
@@ -204,24 +227,3 @@ class ResetPasswordView(APIView):
             return Response({'message': '密碼重設成功'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
         except User.DoesNotExist:
             return Response({'message': '用戶不存在'}, status=status.HTTP_404_NOT_FOUND, content_type='application/json; charset=utf-8')
-class CancelOrderView(APIView):
-    """
-        移除訂單 API
-    """
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-    def post(self, request, order_id):
-        try:
-            order = Order.objects.get(id=order_id)
-            order.delete()
-            return Response(
-                {'message': '訂單移除成功'},
-                status=status.HTTP_200_OK,
-                content_type='application/json; charset=utf-8'
-            )
-        except Order.DoesNotExist:
-            return Response(
-                {'message': '訂單不存在'},
-                status=status.HTTP_404_NOT_FOUND,
-                content_type='application/json; charset=utf-8'
-            )
