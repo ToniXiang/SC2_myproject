@@ -1,8 +1,8 @@
 import 'package:practice0419_frontend/presentation/presentation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class CustomDrawer extends StatelessWidget {
   const CustomDrawer({super.key});
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -104,7 +104,10 @@ class CustomDrawer extends StatelessWidget {
     );
   }
 }
-
+void removeToken() async {
+  const storage = FlutterSecureStorage();
+  await storage.delete(key: 'auth_token');
+}
 void showLogoutDialog(BuildContext context) {
   showDialog(
     context: context,
@@ -127,7 +130,8 @@ void showLogoutDialog(BuildContext context) {
               child: const Text('取消'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
+                removeToken();
                 Navigator.of(context).pop();
                 Navigator.pushAndRemoveUntil(
                   context,

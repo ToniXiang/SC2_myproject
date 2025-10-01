@@ -27,14 +27,15 @@ from typing import cast, Dict, Any
 class RegisterView(APIView):
     permission_classes = [AllowAny]
     """
-        註冊 API：存儲用戶的姓名、密碼和電子郵件。
+        註冊 API：存儲用戶的姓名、密碼、驗證碼和電子郵件。
     """
     def post(self,request):
         username=request.data.get('username')
         email=request.data.get('email')
         password=request.data.get('password')
-        if not username or not email or not password:
-            return Response({'message': '需要完整郵件、名稱與密碼'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
+        verification_code=request.data.get('verification_code')
+        if not username or not email or not password or not verification_code:
+            return Response({'message': '需要完整郵件、名稱、密碼與驗證碼'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
         if User.objects.filter(email=email).exists():
             return Response({'message': '此郵件已被註冊'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
         if User.objects.filter(username=username).exists():
@@ -162,7 +163,7 @@ class UserView(APIView):
             return Response({'message':'伺服器錯誤'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR, content_type='application/json; charset=utf-8')
 class SendVerificationCodeView(APIView):
     """
-        驗證碼 API：發送重設密碼驗證碼到用戶 email
+        驗證碼 API：發送重設密碼驗證碼到用戶 email(僅測試用，實際專案請使用第三方服務)
     """
     permission_classes = [AllowAny]
     def post(self, request):
@@ -171,11 +172,11 @@ class SendVerificationCodeView(APIView):
             return Response({'message': '缺少 email'}, status=status.HTTP_400_BAD_REQUEST, content_type='application/json; charset=utf-8')
 
         # 生成 6 位數驗證碼
-        code = str(random.randint(100000, 999999))
-        cache.set(f'password_reset_{email}', code, timeout=300)  # 5 分鐘有效
+        verification_code = str(random.randint(100000, 999999))
+        cache.set(f'password_reset_{email}', verification_code, timeout=300)  # 5 分鐘有效
 
         # TODO: 用郵件發送驗證碼
-        print(f'驗證碼發送到 {email}: {code}')
+        print(f'驗證碼發送到 {email}: {verification_code}')
 
         return Response({'message': '驗證碼已發送'}, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 class ResetPasswordView(APIView):

@@ -12,9 +12,10 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController codeController = TextEditingController();
   final storage = FlutterSecureStorage();
   bool isLoading = false;
-  void login() async {
+  void _login() async {
     try {
       setState(() {
         isLoading = true;
@@ -29,7 +30,10 @@ class _LoginPageState extends State<LoginPage> {
         String username = responseData['username'] ?? "未知使用者";
         await saveToken(token);
         if (mounted) {
-          MessageService.showMessage(context, responseData['message']+"  歡迎：$username");
+          MessageService.showMessage(
+            context,
+            responseData['message'] + "  歡迎：$username",
+          );
         }
         setState(() {
           isLoading = false;
@@ -59,14 +63,29 @@ class _LoginPageState extends State<LoginPage> {
       });
     }
   }
-
-  void register() async {
+  void _sendCode() async{
+    try {
+      final responseData = await ApiService.postRequest('api/send_verification_code/', {
+        'email': emailController.text,
+      });
+      if (mounted) {
+        // 驗證碼僅能從後端取得，為了模擬安全性不會顯示在前端
+        MessageService.showMessage(context, responseData['message']);
+      }
+    } catch (e) {
+      if (mounted) {
+        MessageService.showMessage(context, '$e');
+      }
+    }
+  }
+  void _register() async {
     try {
       isLoading = true;
       final responseData = await ApiService.postRequest('api/register/', {
         'email': emailController.text,
         'username': usernameController.text,
         'password': passwordController.text,
+        'verification_code': codeController.text
       });
       if (mounted) {
         MessageService.showMessage(context, responseData['message']);
@@ -130,19 +149,22 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 16),
             _PasswordInput(
-              controller: passwordController,
-              label: '密碼',
+              controller: codeController,
+              label: '驗證碼(僅註冊需要)',
             ),
+            TextButton(onPressed: _sendCode, child: const Text('發送驗證碼')),
+            const SizedBox(height: 16),
+            _PasswordInput(controller: passwordController, label: '密碼'),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: login,
+              onPressed: _login,
               style: ElevatedButton.styleFrom(
                 side: BorderSide(color: theme.colorScheme.primary),
               ),
               child: const Text('登入'),
             ),
             const SizedBox(height: 32),
-            TextButton(onPressed: register, child: const Text('註冊')),
+            TextButton(onPressed: _register, child: const Text('註冊')),
             const SizedBox(height: 32),
             if (isLoading)
               CircularProgressIndicator(
@@ -174,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
         ),
         contentPadding: const EdgeInsets.symmetric(
           vertical: 12,
-          horizontal: 16,
+          horizontal: 8,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -191,13 +213,11 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
+
 class _PasswordInput extends StatefulWidget {
   final TextEditingController controller;
   final String label;
-  const _PasswordInput({
-    required this.controller,
-    required this.label,
-  });
+  const _PasswordInput({required this.controller, required this.label});
   @override
   State<_PasswordInput> createState() => _PasswordInputState();
 }
@@ -215,7 +235,11 @@ class _PasswordInputState extends State<_PasswordInput> {
       decoration: InputDecoration(
         labelText: widget.label,
         labelStyle: TextStyle(fontSize: 14, color: theme.colorScheme.outline),
-        prefixIcon: Icon(Icons.lock_outline, size: 20, color: theme.colorScheme.primary),
+        prefixIcon: Icon(
+          Icons.lock_outline,
+          size: 20,
+          color: theme.colorScheme.primary,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             _obscureText ? Icons.visibility_off : Icons.visibility,
@@ -228,7 +252,10 @@ class _PasswordInputState extends State<_PasswordInput> {
             });
           },
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 12,
+          horizontal: 16,
+        ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: theme.colorScheme.onSurface),
@@ -244,4 +271,3 @@ class _PasswordInputState extends State<_PasswordInput> {
     );
   }
 }
-
